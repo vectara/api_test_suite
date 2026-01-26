@@ -1,0 +1,52 @@
+# Vectara API Test Suite Configuration
+# =====================================
+# Copy this file to settings.local.yaml and update with your credentials
+# DO NOT commit settings.local.yaml to version control
+
+# API Configuration
+api:
+  # Base URL for Vectara API (change for on-premise deployments)
+  base_url: "https://api.vectara.io"
+
+  # Your Vectara Customer ID (required)
+  customer_id: ""
+
+  # API Key with QueryService and IndexService permissions
+  # Recommended: Use environment variable VECTARA_API_KEY instead
+  api_key: ""
+
+# Test Configuration
+test:
+  # Corpus name prefix for test corpora (will be auto-created and cleaned up)
+  corpus_prefix: "api_test_"
+
+  # Timeout for API requests (seconds)
+  request_timeout: 30
+
+  # Number of retries for failed requests
+  max_retries: 3
+
+  # Delay between retries (seconds)
+  retry_delay: 1
+
+# Reporting
+reporting:
+  # Output directory for test reports
+  output_dir: "reports"
+
+  # Generate HTML report
+  html_report: true
+
+  # Generate JSON report for CI/CD integration
+  json_report: true
+
+  # Include response payloads in reports (may contain sensitive data)
+  include_payloads: false
+
+# Logging
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+
+  # Log file path (leave empty to disable file logging)
+  file: "reports/test_run.log"

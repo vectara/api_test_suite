@@ -1,0 +1,62 @@
+"""
+Configuration management for Vectara API Test Suite.
+
+Uses environment variables for all configuration to support
+multiple deployment targets (SaaS, staging, on-premise).
+"""
+
+import os
+from typing import Optional
+
+
+class Config:
+    """Configuration manager using environment variables."""
+
+    def __init__(self):
+        pass
+
+    @property
+    def api_key(self) -> Optional[str]:
+        """Get Personal API key from environment."""
+        return os.environ.get("VECTARA_API_KEY")
+
+    @property
+    def base_url(self) -> str:
+        """Get API base URL from environment or use default."""
+        return os.environ.get("VECTARA_BASE_URL", "https://api.vectara.io")
+
+    @property
+    def request_timeout(self) -> int:
+        """Get request timeout in seconds."""
+        return int(os.environ.get("VECTARA_TIMEOUT", "30"))
+
+    @property
+    def max_retries(self) -> int:
+        """Get maximum retry count."""
+        return int(os.environ.get("VECTARA_MAX_RETRIES", "3"))
+
+    @property
+    def corpus_prefix(self) -> str:
+        """Get test corpus name prefix."""
+        return os.environ.get("VECTARA_CORPUS_PREFIX", "api_test_")
+
+    def set_api_key(self, api_key: str) -> None:
+        """Set API key programmatically."""
+        os.environ["VECTARA_API_KEY"] = api_key
+
+    def validate(self) -> tuple[bool, list[str]]:
+        """
+        Validate required configuration.
+
+        Returns:
+            Tuple of (is_valid, list of error messages)
+        """
+        errors = []
+
+        if not self.api_key:
+            errors.append(
+                "API key is required. Set VECTARA_API_KEY environment variable "
+                "or provide via --api-key"
+            )
+
+        return len(errors) == 0, errors
