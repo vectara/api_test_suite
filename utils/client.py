@@ -290,21 +290,27 @@ class VectaraClient:
         self,
         corpus_key: str,
         query_text: str,
-        summarizer: str = "vectara-summary-ext-v1.2.0",
+        summarizer: str = None,
         max_results: int = 10,
         **kwargs,
     ) -> APIResponse:
-        """Execute a query with RAG summarization."""
+        """Execute a query with RAG summarization.
+
+        If summarizer is None, uses the instance's default generation preset.
+        """
+        generation_config = {
+            "max_used_search_results": max_results,
+        }
+        if summarizer:
+            generation_config["generation_preset_name"] = summarizer
+
         data = {
             "query": query_text,
             "search": {
                 "corpora": [{"corpus_key": corpus_key}],
                 "limit": max_results,
             },
-            "generation": {
-                "generation_preset_name": summarizer,
-                "max_used_search_results": max_results,
-            },
+            "generation": generation_config,
             **kwargs,
         }
         return self.post("/v2/query", data=data)
@@ -314,13 +320,15 @@ class VectaraClient:
     # -------------------------------------------------------------------------
 
     def create_chat(self, corpus_key: str, query_text: str, **kwargs) -> APIResponse:
-        """Start a new chat conversation."""
+        """Start a new chat conversation.
+
+        Note: Omits generation config to use instance defaults and avoid rephraser issues.
+        """
         data = {
             "query": query_text,
             "search": {
                 "corpora": [{"corpus_key": corpus_key}],
             },
-            "generation": {},
             "chat": {"store": True},
             **kwargs,
         }
