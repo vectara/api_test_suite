@@ -40,6 +40,16 @@ class Config:
         """Get test corpus name prefix."""
         return os.environ.get("VECTARA_CORPUS_PREFIX", "api_test_")
 
+    @property
+    def generation_preset(self) -> Optional[str]:
+        """Get generation preset name from environment."""
+        return os.environ.get("VECTARA_GENERATION_PRESET")
+
+    @property
+    def llm_name(self) -> Optional[str]:
+        """Get LLM name from environment."""
+        return os.environ.get("VECTARA_LLM_NAME")
+
     def set_api_key(self, api_key: str) -> None:
         """Set API key programmatically."""
         os.environ["VECTARA_API_KEY"] = api_key

@@ -41,6 +41,8 @@ class VectaraClient:
         self.config = config or Config()
         self.logger = logging.getLogger(__name__)
         self._session: Optional[requests.Session] = None
+        self.generation_preset = self.config.generation_preset
+        self.llm_name = self.config.llm_name
 
     @property
     def session(self) -> requests.Session:
@@ -184,6 +186,42 @@ class VectaraClient:
         return self._request("DELETE", endpoint, **kwargs)
 
     # -------------------------------------------------------------------------
+    # Generation Config Helper
+    # -------------------------------------------------------------------------
+
+    def _build_generation_config(
+        self,
+        max_results: Optional[int] = None,
+        preset: Optional[str] = None,
+        llm_name: Optional[str] = None,
+    ) -> dict:
+        """Build generation config with preset and/or llm_name.
+
+        Args:
+            max_results: Maximum search results to use for generation (only added if provided).
+            preset: Generation preset name (overrides instance default).
+            llm_name: LLM model name (overrides instance default).
+
+        Returns:
+            Generation config dict for API request.
+        """
+        config = {}
+
+        if max_results is not None:
+            config["max_used_search_results"] = max_results
+
+        # Use provided values or fall back to instance defaults
+        preset = preset or self.generation_preset
+        llm_name = llm_name or self.llm_name
+
+        if preset:
+            config["generation_preset_name"] = preset
+        if llm_name:
+            config["model_parameters"] = {"llm_name": llm_name}
+
+        return config
+
+    # -------------------------------------------------------------------------
     # Vectara API Operations - Corpora
     # -------------------------------------------------------------------------
 
@@ -290,19 +328,27 @@ class VectaraClient:
         self,
         corpus_key: str,
         query_text: str,
-        summarizer: str = None,
+        summarizer: Optional[str] = None,
+        llm_name: Optional[str] = None,
         max_results: int = 10,
         **kwargs,
     ) -> APIResponse:
         """Execute a query with RAG summarization.
 
-        If summarizer is None, uses the instance's default generation preset.
+        Args:
+            corpus_key: The corpus to query.
+            query_text: The query text.
+            summarizer: Generation preset name (overrides instance default).
+            llm_name: LLM model name (overrides instance default).
+            max_results: Maximum search results.
+
+        If neither summarizer nor llm_name is provided, uses instance defaults.
         """
-        generation_config = {
-            "max_used_search_results": max_results,
-        }
-        if summarizer:
-            generation_config["generation_preset_name"] = summarizer
+        generation_config = self._build_generation_config(
+            max_results=max_results,
+            preset=summarizer,
+            llm_name=llm_name,
+        )
 
         data = {
             "query": query_text,
@@ -322,7 +368,7 @@ class VectaraClient:
     def create_chat(self, corpus_key: str, query_text: str, **kwargs) -> APIResponse:
         """Start a new chat conversation.
 
-        Note: Omits generation config to use instance defaults and avoid rephraser issues.
+        If generation_preset or llm_name is configured on the client, adds generation config.
         """
         data = {
             "query": query_text,
@@ -332,6 +378,11 @@ class VectaraClient:
             "chat": {"store": True},
             **kwargs,
         }
+
+        # Only add generation config if preset or llm_name is configured
+        if self.generation_preset or self.llm_name:
+            data["generation"] = self._build_generation_config()
+
         return self.post("/v2/chats", data=data)
 
     def list_chats(self, limit: int = 100) -> APIResponse:
@@ -473,7 +524,19 @@ class VectaraClient:
             if not session_id:
                 return APIResponse(
                     status_code=500,
-                    data={"error": "Could not get session key from response"},
+                    data={"error": f"No session key in response: {session_response.data}"},
+                    elapsed_ms=0,
+                )
+
+            # Small delay to ensure session is committed to database
+            time.sleep(0.5)
+
+            # Verify session exists before executing
+            verify_response = self.get_agent_session(agent_id, session_id)
+            if not verify_response.success:
+                return APIResponse(
+                    status_code=500,
+                    data={"error": f"Session {session_id} created but verification failed: {verify_response.data}"},
                     elapsed_ms=0,
                 )
 

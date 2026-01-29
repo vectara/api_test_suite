@@ -32,6 +32,18 @@ def pytest_addoption(parser):
         default=None,
         help="Vectara API base URL (for on-premise deployments)",
     )
+    parser.addoption(
+        "--generation-preset",
+        action="store",
+        default=None,
+        help="Generation preset name for summarization (e.g., mockingbird-2.0)",
+    )
+    parser.addoption(
+        "--llm-name",
+        action="store",
+        default=None,
+        help="LLM model name to override preset's model (e.g., gpt-4o)",
+    )
 
 
 def pytest_configure(config):
@@ -48,6 +60,12 @@ def pytest_configure(config):
 
     if config.getoption("--base-url"):
         os.environ["VECTARA_BASE_URL"] = config.getoption("--base-url")
+
+    if config.getoption("--generation-preset"):
+        os.environ["VECTARA_GENERATION_PRESET"] = config.getoption("--generation-preset")
+
+    if config.getoption("--llm-name"):
+        os.environ["VECTARA_LLM_NAME"] = config.getoption("--llm-name")
 
 
 @pytest.fixture(scope="session")
