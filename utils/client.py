@@ -23,6 +23,7 @@ from .config import Config
 @dataclass
 class APIResponse:
     """Wrapper for API responses with metadata."""
+
     status_code: int
     data: Any
     elapsed_ms: float
@@ -62,11 +63,13 @@ class VectaraClient:
             self._session.mount("http://", adapter)
 
             # Set default headers
-            self._session.headers.update({
-                "Content-Type": "application/json",
-                "Accept": "application/json",
-                "x-api-key": self.config.api_key or "",
-            })
+            self._session.headers.update(
+                {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json",
+                    "x-api-key": self.config.api_key or "",
+                }
+            )
 
         return self._session
 
@@ -165,7 +168,9 @@ class VectaraClient:
     # Convenience methods for HTTP verbs
     # -------------------------------------------------------------------------
 
-    def get(self, endpoint: str, params: Optional[dict] = None, **kwargs) -> APIResponse:
+    def get(
+        self, endpoint: str, params: Optional[dict] = None, **kwargs
+    ) -> APIResponse:
         """Make a GET request."""
         return self._request("GET", endpoint, params=params, **kwargs)
 
@@ -177,7 +182,9 @@ class VectaraClient:
         """Make a PUT request."""
         return self._request("PUT", endpoint, data=data, **kwargs)
 
-    def patch(self, endpoint: str, data: Optional[dict] = None, **kwargs) -> APIResponse:
+    def patch(
+        self, endpoint: str, data: Optional[dict] = None, **kwargs
+    ) -> APIResponse:
         """Make a PATCH request."""
         return self._request("PATCH", endpoint, data=data, **kwargs)
 
@@ -225,7 +232,9 @@ class VectaraClient:
     # Vectara API Operations - Corpora
     # -------------------------------------------------------------------------
 
-    def list_corpora(self, limit: int = 100, page_key: Optional[str] = None) -> APIResponse:
+    def list_corpora(
+        self, limit: int = 100, page_key: Optional[str] = None
+    ) -> APIResponse:
         """List all corpora for the customer."""
         params = {"limit": limit}
         if page_key:
@@ -397,7 +406,9 @@ class VectaraClient:
         """Delete a chat conversation."""
         return self.delete(f"/v2/chats/{chat_id}")
 
-    def add_chat_turn(self, chat_id: str, query_text: str, corpus_key: str, **kwargs) -> APIResponse:
+    def add_chat_turn(
+        self, chat_id: str, query_text: str, corpus_key: str, **kwargs
+    ) -> APIResponse:
         """Add a turn to an existing chat."""
         data = {
             "query": query_text,
@@ -439,10 +450,10 @@ class VectaraClient:
     def create_agent(
         self,
         name: str,
-        corpus_keys: list[str] = None,
+        corpus_keys: Optional[list[str]] = None,
         description: str = "",
-        model_name: str = "gpt-4o",
-        agent_key: str = None,
+        model_name: Optional[str] = None,
+        agent_key: Optional[str] = None,
         **kwargs,
     ) -> APIResponse:
         """Create a new agent for conversational AI.
@@ -451,7 +462,7 @@ class VectaraClient:
             name: Agent name (display name)
             corpus_keys: Optional list of corpus keys for RAG search tool
             description: Agent description
-            model_name: LLM model name (default: gpt-4o)
+            model_name: LLM model name (uses instance llm_name or defaults to gpt-4o)
             agent_key: Unique key for the agent (auto-generated if not provided)
         """
         import uuid
@@ -459,6 +470,9 @@ class VectaraClient:
         # Generate agent key if not provided
         if not agent_key:
             agent_key = f"test_agent_{uuid.uuid4().hex[:8]}"
+
+        # Use provided model_name, fall back to instance llm_name, then default
+        model_name = model_name or self.llm_name or "gpt-4o"
 
         # Build first_step with type "conversational" and required output_parser
         first_step = {
@@ -520,11 +534,15 @@ class VectaraClient:
             session_response = self.create_agent_session(agent_id)
             if not session_response.success:
                 return session_response
-            session_id = session_response.data.get("key") or session_response.data.get("session_key")
+            session_id = session_response.data.get("key") or session_response.data.get(
+                "session_key"
+            )
             if not session_id:
                 return APIResponse(
                     status_code=500,
-                    data={"error": f"No session key in response: {session_response.data}"},
+                    data={
+                        "error": f"No session key in response: {session_response.data}"
+                    },
                     elapsed_ms=0,
                 )
 
@@ -536,7 +554,9 @@ class VectaraClient:
             if not verify_response.success:
                 return APIResponse(
                     status_code=500,
-                    data={"error": f"Session {session_id} created but verification failed: {verify_response.data}"},
+                    data={
+                        "error": f"Session {session_id} created but verification failed: {verify_response.data}"
+                    },
                     elapsed_ms=0,
                 )
 
@@ -551,7 +571,9 @@ class VectaraClient:
             ],
             **kwargs,
         }
-        return self.post(f"/v2/agents/{agent_id}/sessions/{session_id}/events", data=data)
+        return self.post(
+            f"/v2/agents/{agent_id}/sessions/{session_id}/events", data=data
+        )
 
     def list_agent_sessions(self, agent_id: str, limit: int = 100) -> APIResponse:
         """List sessions for an agent."""
