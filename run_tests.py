@@ -121,6 +121,10 @@ def build_pytest_args(args, test_selection):
         pytest_args.extend(["--api-key", args.api_key])
     if args.base_url:
         pytest_args.extend(["--base-url", args.base_url])
+    if args.llm_name:
+        pytest_args.extend(["--llm-name", args.llm_name])
+    if args.generation_preset:
+        pytest_args.extend(["--generation-preset", args.generation_preset])
 
     return pytest_args
 
@@ -153,13 +157,17 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python run_tests.py --api-key YOUR_KEY        # With API key
-  python run_tests.py --tests auth,corpus       # Run specific tests
-  python run_tests.py --html-report             # Generate HTML report
+  python run_tests.py --api-key YOUR_KEY              # With API key
+  python run_tests.py --tests auth,corpus             # Run specific tests
+  python run_tests.py --html-report                   # Generate HTML report
+  python run_tests.py --llm-name mockingbird-2.0      # Specify LLM model
+  python run_tests.py --generation-preset vectara-summary-ext-24-05-med-omni
 
 Environment Variables:
-  VECTARA_API_KEY     Your Personal API key (recommended for CI/CD)
-  VECTARA_BASE_URL    Custom API URL for on-premise deployments
+  VECTARA_API_KEY            Your Personal API key (recommended for CI/CD)
+  VECTARA_BASE_URL           Custom API URL for on-premise deployments
+  VECTARA_LLM_NAME           LLM model name for generation
+  VECTARA_GENERATION_PRESET  Generation preset name
         """,
     )
 
@@ -171,6 +179,16 @@ Environment Variables:
     parser.add_argument(
         "--base-url", "-u",
         help="Vectara API base URL for on-premise (default: https://api.vectara.io)",
+    )
+
+    # Generation config arguments
+    parser.add_argument(
+        "--llm-name",
+        help="LLM model name for generation (or set VECTARA_LLM_NAME env var)",
+    )
+    parser.add_argument(
+        "--generation-preset",
+        help="Generation preset name (or set VECTARA_GENERATION_PRESET env var)",
     )
 
     # Test selection
