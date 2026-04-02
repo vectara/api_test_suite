@@ -17,6 +17,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+from pathlib import Path
+
 from .config import Config
 
 
@@ -163,6 +165,64 @@ class VectaraClient:
                 elapsed_ms=elapsed_ms,
                 error=f"Unexpected error: {str(e)}",
             )
+
+    def _request_raw(
+        self,
+        method: str,
+        endpoint: str,
+        data: Optional[dict] = None,
+        params: Optional[dict] = None,
+        headers: Optional[dict] = None,
+        files: Optional[dict] = None,
+        stream: bool = False,
+    ) -> requests.Response:
+        """Make an API request and return the raw :class:`requests.Response`.
+
+        This is useful for streaming responses (SSE) or multipart uploads
+        where the caller needs direct access to the underlying response.
+
+        When *files* is provided the request is sent as ``multipart/form-data``
+        (using ``data=`` instead of ``json=``), and the ``Content-Type`` header
+        is left for *requests* to set automatically so that the multipart
+        boundary is included.
+
+        Args:
+            method: HTTP method (GET, POST, etc.)
+            endpoint: API endpoint path.
+            data: Request body.  Sent as JSON unless *files* is provided.
+            params: Query parameters.
+            headers: Additional headers (merged on top of session defaults).
+            files: Mapping suitable for ``requests``' *files* parameter.
+            stream: If ``True`` the response body is not downloaded eagerly.
+
+        Returns:
+            The raw :class:`requests.Response` object.
+        """
+        url = self._build_url(endpoint)
+        request_headers = {**(headers or {})}
+
+        self.logger.debug(f"{method} {url}")
+
+        kwargs: dict = {
+            "method": method,
+            "url": url,
+            "params": params,
+            "headers": request_headers,
+            "timeout": self.config.request_timeout,
+            "stream": stream,
+        }
+
+        if files is not None:
+            # Multipart upload -- use data= (not json=) and let requests
+            # generate the Content-Type with the correct boundary.
+            kwargs["data"] = data
+            kwargs["files"] = files
+            # Remove Content-Type so requests sets multipart boundary itself.
+            kwargs["headers"].pop("Content-Type", None)
+        else:
+            kwargs["json"] = data
+
+        return self.session.request(**kwargs)
 
     # -------------------------------------------------------------------------
     # Convenience methods for HTTP verbs
@@ -586,6 +646,114 @@ class VectaraClient:
     def delete_agent_session(self, agent_id: str, session_id: str) -> APIResponse:
         """Delete an agent session."""
         return self.delete(f"/v2/agents/{agent_id}/sessions/{session_id}")
+
+    # -------------------------------------------------------------------------
+    # File Upload
+    # -------------------------------------------------------------------------
+
+    def upload_file(
+        self,
+        corpus_key: str,
+        file_path: str,
+        metadata: Optional[dict] = None,
+    ) -> APIResponse:
+        """Upload a file to a corpus via multipart form-data.
+
+        Args:
+            corpus_key: Target corpus key.
+            file_path: Local filesystem path to the file to upload.
+            metadata: Optional metadata dict to attach to the document.
+
+        Returns:
+            :class:`APIResponse` with the upload result.
+        """
+        import json as _json
+
+        path = Path(file_path)
+        endpoint = f"/v2/corpora/{corpus_key}/upload_file"
+
+        start_time = time.time()
+
+        try:
+            with open(path, "rb") as fh:
+                files = {"file": (path.name, fh)}
+                form_data: dict = {}
+                if metadata is not None:
+                    form_data["metadata"] = _json.dumps(metadata)
+
+                raw = self._request_raw(
+                    method="POST",
+                    endpoint=endpoint,
+                    data=form_data if form_data else None,
+                    files=files,
+                )
+
+            elapsed_ms = (time.time() - start_time) * 1000
+
+            try:
+                response_data = raw.json()
+            except ValueError:
+                response_data = raw.text
+
+            return APIResponse(
+                status_code=raw.status_code,
+                data=response_data,
+                elapsed_ms=elapsed_ms,
+                headers=dict(raw.headers),
+            )
+
+        except Exception as e:
+            elapsed_ms = (time.time() - start_time) * 1000
+            self.logger.error(f"File upload error: {e}")
+            return APIResponse(
+                status_code=0,
+                data=None,
+                elapsed_ms=elapsed_ms,
+                error=f"File upload error: {str(e)}",
+            )
+
+    # -------------------------------------------------------------------------
+    # Agent SSE Streaming
+    # -------------------------------------------------------------------------
+
+    def execute_agent_sse(
+        self,
+        agent_key: str,
+        session_key: str,
+        message: str,
+    ) -> requests.Response:
+        """Send a message to an agent session and return the raw SSE stream.
+
+        The returned :class:`requests.Response` has ``stream=True`` so the
+        caller can iterate over Server-Sent Events with
+        :func:`utils.waiters.read_sse_events`.
+
+        Args:
+            agent_key: The agent's unique key.
+            session_key: The session's unique key.
+            message: User message text.
+
+        Returns:
+            Raw streaming :class:`requests.Response`.
+        """
+        endpoint = f"/v2/agents/{agent_key}/sessions/{session_key}/events"
+        data = {
+            "type": "input_message",
+            "messages": [
+                {
+                    "type": "text",
+                    "content": message,
+                }
+            ],
+        }
+
+        return self._request_raw(
+            method="POST",
+            endpoint=endpoint,
+            data=data,
+            headers={"Accept": "text/event-stream"},
+            stream=True,
+        )
 
     # -------------------------------------------------------------------------
     # Health Check
