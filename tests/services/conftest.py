@@ -21,9 +21,11 @@ def test_corpus(client, unique_id):
     Yields the corpus key string.
     """
     corpus_name = f"svc_test_{unique_id}"
+    corpus_key = f"svc_test_{uuid.uuid4().hex}"
 
     response = client.create_corpus(
         name=corpus_name,
+        key=corpus_key,
         description="Automated service test corpus - safe to delete",
     )
 
