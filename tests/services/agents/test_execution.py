@@ -9,8 +9,8 @@ import pytest
 
 
 @pytest.mark.core
-class TestAgentExecutionCore:
-    """Core-level agent execution checks."""
+class TestAgentExecution:
+    """Agent execution checks."""
 
     def test_execute_agent_query(self, client, shared_agent):
         """Test executing a query against an agent."""
@@ -65,8 +65,8 @@ class TestAgentExecutionCore:
 
 
 @pytest.mark.regression
-class TestAgentExecutionRegression:
-    """Regression-level agent execution edge cases."""
+class TestAgentExecutionEdgeCases:
+    """Agent execution edge cases."""
 
     def test_execute_nonexistent_agent(self, client):
         """Test executing against a non-existent agent."""

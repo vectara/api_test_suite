@@ -8,8 +8,8 @@ import pytest
 
 
 @pytest.mark.sanity
-class TestSemanticSearchSanity:
-    """Sanity-level semantic search checks."""
+class TestSemanticSearchBasic:
+    """Basic semantic search checks."""
 
     def test_basic_query(self, client, seeded_shared_corpus):
         """Test basic semantic search query."""
@@ -30,8 +30,8 @@ class TestSemanticSearchSanity:
 
 
 @pytest.mark.core
-class TestSemanticSearchCore:
-    """Core-level semantic search checks."""
+class TestSemanticSearchPagination:
+    """Semantic search relevance, limit, and offset checks."""
 
     def test_query_returns_relevant_results(self, client, seeded_shared_corpus):
         """Test that query returns semantically relevant results."""

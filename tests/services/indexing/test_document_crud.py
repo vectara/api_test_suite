@@ -8,8 +8,8 @@ import pytest
 
 
 @pytest.mark.sanity
-class TestSingleDocSanity:
-    """Sanity-level single document indexing checks."""
+class TestDocumentIndex:
+    """Document indexing checks."""
 
     def test_index_single_document(self, client, shared_corpus, unique_id, sample_document):
         """Test indexing a single document."""
@@ -28,8 +28,8 @@ class TestSingleDocSanity:
 
 
 @pytest.mark.core
-class TestSingleDocCore:
-    """Core-level single document operations."""
+class TestDocumentCrud:
+    """Document get, delete, and update operations."""
 
     def test_get_document(self, client, shared_corpus, unique_id):
         """Test retrieving an indexed document."""

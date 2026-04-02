@@ -10,8 +10,8 @@ import time
 
 
 @pytest.mark.sanity
-class TestCorpusCrudSanity:
-    """Sanity-level corpus CRUD checks."""
+class TestCorpusCreate:
+    """Corpus creation checks."""
 
     def test_create_corpus(self, client, unique_id):
         """Test creating a new corpus."""
@@ -39,8 +39,8 @@ class TestCorpusCrudSanity:
 
 
 @pytest.mark.core
-class TestCorpusCrudCore:
-    """Core-level corpus CRUD checks."""
+class TestCorpusCrud:
+    """Corpus get, update, and delete checks."""
 
     def test_get_corpus(self, client, test_corpus):
         """Test retrieving corpus details."""
@@ -103,8 +103,8 @@ class TestCorpusCrudCore:
 
 
 @pytest.mark.regression
-class TestCorpusCrudRegression:
-    """Regression-level corpus CRUD checks."""
+class TestCorpusErrorCases:
+    """Corpus error and edge case checks."""
 
     def test_create_duplicate_key_corpus_fails(self, client, test_corpus):
         """Test that creating a corpus with an existing key fails."""

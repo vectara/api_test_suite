@@ -9,8 +9,8 @@ import time
 
 
 @pytest.mark.sanity
-class TestAgentCrudSanity:
-    """Sanity-level agent CRUD checks."""
+class TestAgentList:
+    """Agent listing checks."""
 
     def test_list_agents(self, client):
         """Test listing all agents."""
@@ -22,8 +22,8 @@ class TestAgentCrudSanity:
 
 
 @pytest.mark.core
-class TestAgentCrudCore:
-    """Core-level agent CRUD checks."""
+class TestAgentCrud:
+    """Agent create, get, update, and delete checks."""
 
     def test_create_agent(self, client, shared_agent_corpus, unique_id):
         """Test creating a new agent."""
