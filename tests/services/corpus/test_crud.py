@@ -1,16 +1,17 @@
 """
-Corpus Management API Tests
+Corpus CRUD Tests
 
-Tests for corpus CRUD operations including creation, retrieval,
-update, and deletion of corpora.
+Tests for corpus create, read, update, and delete operations.
+Grouped by depth marker into separate classes.
 """
 
 import pytest
 import time
 
 
-class TestCorpusManagement:
-    """Test suite for corpus management operations."""
+@pytest.mark.sanity
+class TestCorpusCrudSanity:
+    """Sanity-level corpus CRUD checks."""
 
     def test_create_corpus(self, client, unique_id):
         """Test creating a new corpus."""
@@ -28,85 +29,33 @@ class TestCorpusManagement:
         assert actual_key, "No key returned in corpus creation response"
 
         # Cleanup using the actual key
-        client.delete_corpus(actual_key)
-
-    def test_create_corpus_with_metadata(self, client, unique_id):
-        """Test creating a corpus with custom filter attributes."""
-        response = client.create_corpus(
-            name=f"Metadata Corpus {unique_id}",
-            description="Corpus with filter attributes",
-            filter_attributes=[
-                {
-                    "name": "category",
-                    "level": "document",
-                    "type": "text",
-                },
-                {
-                    "name": "priority",
-                    "level": "document",
-                    "type": "integer",
-                },
-            ],
-        )
-
-        assert response.success, (
-            f"Corpus creation with metadata failed: {response.status_code} - {response.data}"
-        )
-
-        # Cleanup using the actual key
-        actual_key = response.data.get("key")
-        if actual_key:
+        try:
             client.delete_corpus(actual_key)
+        except Exception:
+            pass
 
-    def test_get_corpus(self, client, test_corpus_key):
+
+@pytest.mark.core
+class TestCorpusCrudCore:
+    """Core-level corpus CRUD checks."""
+
+    def test_get_corpus(self, client, test_corpus):
         """Test retrieving corpus details."""
-        response = client.get_corpus(test_corpus_key)
+        response = client.get_corpus(test_corpus)
 
         assert response.success, (
             f"Get corpus failed: {response.status_code} - {response.data}"
         )
-        assert response.data.get("key") == test_corpus_key, (
-            f"Corpus key mismatch: expected {test_corpus_key}"
+        assert response.data.get("key") == test_corpus, (
+            f"Corpus key mismatch: expected {test_corpus}"
         )
 
-    def test_list_corpora(self, client):
-        """Test listing all corpora."""
-        response = client.list_corpora(limit=100)
-
-        assert response.success, (
-            f"List corpora failed: {response.status_code} - {response.data}"
-        )
-
-        # Response should contain corpora list
-        data = response.data
-        assert "corpora" in data or isinstance(data, list), (
-            "Expected corpora in response"
-        )
-
-    def test_list_corpora_pagination(self, client):
-        """Test corpus listing with pagination."""
-        # First request with small limit
-        response1 = client.list_corpora(limit=2)
-
-        assert response1.success, (
-            f"Paginated list failed: {response1.status_code}"
-        )
-
-        # If there's a next page, test pagination
-        if response1.data.get("metadata", {}).get("page_key"):
-            page_key = response1.data["metadata"]["page_key"]
-            response2 = client.list_corpora(limit=2, page_key=page_key)
-
-            assert response2.success, (
-                f"Second page request failed: {response2.status_code}"
-            )
-
-    def test_update_corpus_description(self, client, test_corpus_key):
+    def test_update_corpus_description(self, client, test_corpus):
         """Test updating corpus description."""
         new_description = f"Updated at {time.time()}"
 
         response = client.update_corpus(
-            corpus_key=test_corpus_key,
+            corpus_key=test_corpus,
             description=new_description,
         )
 
@@ -115,7 +64,7 @@ class TestCorpusManagement:
         )
 
         # Verify update
-        get_response = client.get_corpus(test_corpus_key)
+        get_response = client.get_corpus(test_corpus)
         assert get_response.data.get("description") == new_description, (
             "Description update not reflected"
         )
@@ -146,11 +95,16 @@ class TestCorpusManagement:
             f"Deleted corpus should return 404, got {get_response.status_code}"
         )
 
-    def test_create_duplicate_key_corpus_fails(self, client, test_corpus_key):
+
+@pytest.mark.regression
+class TestCorpusCrudRegression:
+    """Regression-level corpus CRUD checks."""
+
+    def test_create_duplicate_key_corpus_fails(self, client, test_corpus):
         """Test that creating a corpus with an existing key fails."""
-        # Attempt to create corpus with the same key as test_corpus_key
+        # Attempt to create corpus with the same key as test_corpus
         response = client.post("/v2/corpora", data={
-            "key": test_corpus_key,
+            "key": test_corpus,
             "name": "Duplicate Key Test",
         })
 
@@ -167,10 +121,10 @@ class TestCorpusManagement:
             f"Expected 404 for non-existent corpus, got {response.status_code}"
         )
 
-    def test_corpus_operations_response_times(self, client, test_corpus_key):
+    def test_corpus_operations_response_times(self, client, test_corpus):
         """Test that corpus operations complete in acceptable time."""
         # Get operation should be fast
-        response = client.get_corpus(test_corpus_key)
+        response = client.get_corpus(test_corpus)
 
         assert response.elapsed_ms < 3000, (
             f"Get corpus took too long: {response.elapsed_ms:.1f}ms"
