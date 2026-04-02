@@ -11,10 +11,10 @@ import pytest
 class TestSemanticSearchSanity:
     """Sanity-level semantic search checks."""
 
-    def test_basic_query(self, client, seeded_corpus):
+    def test_basic_query(self, client, seeded_shared_corpus):
         """Test basic semantic search query."""
         response = client.query(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="What is artificial intelligence?",
             limit=5,
         )
@@ -33,10 +33,10 @@ class TestSemanticSearchSanity:
 class TestSemanticSearchCore:
     """Core-level semantic search checks."""
 
-    def test_query_returns_relevant_results(self, client, seeded_corpus):
+    def test_query_returns_relevant_results(self, client, seeded_shared_corpus):
         """Test that query returns semantically relevant results."""
         response = client.query(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="machine learning and neural networks",
             limit=3,
         )
@@ -47,10 +47,10 @@ class TestSemanticSearchCore:
         results = response.data.get("search_results", response.data.get("results", []))
         assert len(results) > 0, "Expected at least one search result"
 
-    def test_query_with_limit(self, client, seeded_corpus):
+    def test_query_with_limit(self, client, seeded_shared_corpus):
         """Test query with result limit."""
         response = client.query(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="technology",
             limit=2,
         )
@@ -60,11 +60,11 @@ class TestSemanticSearchCore:
         results = response.data.get("search_results", response.data.get("results", []))
         assert len(results) <= 2, f"Expected at most 2 results, got {len(results)}"
 
-    def test_query_with_offset(self, client, seeded_corpus):
+    def test_query_with_offset(self, client, seeded_shared_corpus):
         """Test query with pagination offset."""
         # First query without offset
         response1 = client.query(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="science and technology",
             limit=2,
             offset=0,
@@ -72,7 +72,7 @@ class TestSemanticSearchCore:
 
         # Second query with offset
         response2 = client.query(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="science and technology",
             limit=2,
             offset=2,

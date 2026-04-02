@@ -13,11 +13,11 @@ import pytest
 class TestPermissions:
     """Core checks for API key permissions."""
 
-    def test_api_key_has_query_permission(self, client, test_corpus, sample_document):
+    def test_api_key_has_query_permission(self, client, shared_corpus, sample_document):
         """Test that API key has QueryService permission."""
         # First index a document to ensure there's something to query
         doc_response = client.index_document(
-            corpus_key=test_corpus,
+            corpus_key=shared_corpus,
             document_id="auth_test_doc",
             text=sample_document["text"],
             metadata=sample_document["metadata"],
@@ -25,7 +25,7 @@ class TestPermissions:
 
         # Now test query permission
         response = client.query(
-            corpus_key=test_corpus,
+            corpus_key=shared_corpus,
             query_text="test query",
             limit=1,
         )
@@ -35,10 +35,10 @@ class TestPermissions:
             f"Ensure API key has QueryService role enabled."
         )
 
-    def test_api_key_has_index_permission(self, client, test_corpus):
+    def test_api_key_has_index_permission(self, client, shared_corpus):
         """Test that API key has IndexService permission."""
         response = client.index_document(
-            corpus_key=test_corpus,
+            corpus_key=shared_corpus,
             document_id="auth_permission_test",
             text="Testing IndexService permission",
         )

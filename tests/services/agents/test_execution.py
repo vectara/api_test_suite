@@ -12,10 +12,10 @@ import pytest
 class TestAgentExecutionCore:
     """Core-level agent execution checks."""
 
-    def test_execute_agent_query(self, client, test_agent):
+    def test_execute_agent_query(self, client, shared_agent):
         """Test executing a query against an agent."""
         response = client.execute_agent(
-            agent_id=test_agent,
+            agent_id=shared_agent,
             query_text="What is Vectara?",
         )
 
@@ -23,11 +23,11 @@ class TestAgentExecutionCore:
             f"Agent execution failed: {response.status_code} - {response.data}"
         )
 
-    def test_execute_agent_with_context(self, client, test_agent):
+    def test_execute_agent_with_context(self, client, shared_agent):
         """Test multi-turn conversation with an agent."""
         # First turn
         response1 = client.execute_agent(
-            agent_id=test_agent,
+            agent_id=shared_agent,
             query_text="Tell me about Vectara agents.",
         )
 
@@ -40,7 +40,7 @@ class TestAgentExecutionCore:
 
         # Second turn (follow-up)
         response2 = client.execute_agent(
-            agent_id=test_agent,
+            agent_id=shared_agent,
             query_text="How do I configure them?",
             session_id=session_id,
         )
@@ -49,10 +49,10 @@ class TestAgentExecutionCore:
             f"Follow-up turn failed: {response2.status_code} - {response2.data}"
         )
 
-    def test_execute_agent_response_time(self, client, test_agent):
+    def test_execute_agent_response_time(self, client, shared_agent):
         """Test that agent execution completes in acceptable time."""
         response = client.execute_agent(
-            agent_id=test_agent,
+            agent_id=shared_agent,
             query_text="What is semantic search?",
         )
 
@@ -80,10 +80,10 @@ class TestAgentExecutionRegression:
             f"Expected 400 or 404, got {response.status_code}"
         )
 
-    def test_agent_handles_special_characters(self, client, test_agent):
+    def test_agent_handles_special_characters(self, client, shared_agent):
         """Test agent handles queries with special characters."""
         response = client.execute_agent(
-            agent_id=test_agent,
+            agent_id=shared_agent,
             query_text="What's Vectara's approach to AI & machine-learning?",
         )
 
@@ -91,7 +91,7 @@ class TestAgentExecutionRegression:
             f"Special character query failed: {response.status_code}"
         )
 
-    def test_agent_handles_long_query(self, client, test_agent):
+    def test_agent_handles_long_query(self, client, shared_agent):
         """Test agent handles longer queries."""
         long_query = (
             "I'm trying to understand how Vectara's conversational AI agents work. "
@@ -101,7 +101,7 @@ class TestAgentExecutionRegression:
         )
 
         response = client.execute_agent(
-            agent_id=test_agent,
+            agent_id=shared_agent,
             query_text=long_query,
         )
 

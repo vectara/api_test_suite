@@ -13,12 +13,12 @@ import time
 class TestDocumentMetadata:
     """Core checks for document metadata indexing."""
 
-    def test_index_document_with_metadata(self, client, test_corpus, unique_id):
+    def test_index_document_with_metadata(self, client, shared_corpus, unique_id):
         """Test indexing a document with custom metadata."""
         doc_id = f"meta_doc_{unique_id}"
 
         response = client.index_document(
-            corpus_key=test_corpus,
+            corpus_key=shared_corpus,
             document_id=doc_id,
             text="Document with rich metadata for testing.",
             metadata={
@@ -34,7 +34,7 @@ class TestDocumentMetadata:
             f"Document with metadata indexing failed: {response.status_code} - {response.data}"
         )
 
-    def test_index_document_special_characters(self, client, test_corpus, unique_id):
+    def test_index_document_special_characters(self, client, shared_corpus, unique_id):
         """Test indexing document with special characters."""
         doc_id = f"special_doc_{unique_id}"
 
@@ -48,7 +48,7 @@ class TestDocumentMetadata:
         )
 
         response = client.index_document(
-            corpus_key=test_corpus,
+            corpus_key=shared_corpus,
             document_id=doc_id,
             text=special_text,
         )
@@ -57,12 +57,12 @@ class TestDocumentMetadata:
             f"Special characters document indexing failed: {response.status_code} - {response.data}"
         )
 
-    def test_indexing_response_time(self, client, test_corpus, unique_id):
+    def test_indexing_response_time(self, client, shared_corpus, unique_id):
         """Test that indexing completes in acceptable time."""
         doc_id = f"perf_doc_{unique_id}"
 
         response = client.index_document(
-            corpus_key=test_corpus,
+            corpus_key=shared_corpus,
             document_id=doc_id,
             text="Performance test document for measuring indexing speed.",
         )

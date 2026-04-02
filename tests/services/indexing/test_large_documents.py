@@ -13,7 +13,7 @@ import time
 class TestLargeDocuments:
     """Regression checks for large and bulk document indexing."""
 
-    def test_index_large_document(self, client, test_corpus, unique_id):
+    def test_index_large_document(self, client, shared_corpus, unique_id):
         """Test indexing a larger document with multiple paragraphs."""
         doc_id = f"large_doc_{unique_id}"
 
@@ -27,7 +27,7 @@ class TestLargeDocuments:
         ])
 
         response = client.index_document(
-            corpus_key=test_corpus,
+            corpus_key=shared_corpus,
             document_id=doc_id,
             text=large_text,
         )
@@ -36,13 +36,13 @@ class TestLargeDocuments:
             f"Large document indexing failed: {response.status_code} - {response.data}"
         )
 
-    def test_index_multiple_documents(self, client, test_corpus, unique_id):
+    def test_index_multiple_documents(self, client, shared_corpus, unique_id):
         """Test indexing multiple documents sequentially."""
         doc_ids = [f"multi_doc_{unique_id}_{i}" for i in range(5)]
 
         for i, doc_id in enumerate(doc_ids):
             response = client.index_document(
-                corpus_key=test_corpus,
+                corpus_key=shared_corpus,
                 document_id=doc_id,
                 text=f"Test document number {i} with unique content.",
                 metadata={"index": i},
@@ -52,13 +52,13 @@ class TestLargeDocuments:
                 f"Document {i} indexing failed: {response.status_code}"
             )
 
-    def test_list_documents(self, client, test_corpus, unique_id):
+    def test_list_documents(self, client, shared_corpus, unique_id):
         """Test listing documents in a corpus."""
         # Index a few documents first
         doc_ids = [f"list_doc_{unique_id}_{i}" for i in range(3)]
         for doc_id in doc_ids:
             response = client.index_document(
-                corpus_key=test_corpus,
+                corpus_key=shared_corpus,
                 document_id=doc_id,
                 text=f"Document {doc_id} for listing test.",
             )
@@ -68,7 +68,7 @@ class TestLargeDocuments:
         time.sleep(3)
 
         # List documents
-        response = client.list_documents(test_corpus, limit=100)
+        response = client.list_documents(shared_corpus, limit=100)
 
         assert response.success, (
             f"List documents failed: {response.status_code} - {response.data}"
@@ -84,12 +84,12 @@ class TestLargeDocuments:
             f"None of the indexed documents found in list. Expected: {doc_ids}, Got: {doc_ids_in_response}"
         )
 
-    def test_index_empty_document_fails(self, client, test_corpus, unique_id):
+    def test_index_empty_document_fails(self, client, shared_corpus, unique_id):
         """Test that indexing an empty document is handled."""
         doc_id = f"empty_doc_{unique_id}"
 
         response = client.index_document(
-            corpus_key=test_corpus,
+            corpus_key=shared_corpus,
             document_id=doc_id,
             text="",  # Empty text
         )

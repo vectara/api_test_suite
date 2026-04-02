@@ -12,10 +12,10 @@ import pytest
 class TestRagSummary:
     """Core checks for RAG summarization."""
 
-    def test_query_with_summary(self, client, seeded_corpus):
+    def test_query_with_summary(self, client, seeded_shared_corpus):
         """Test query with RAG summarization."""
         response = client.query_with_summary(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="How is AI being used today?",
             max_results=3,
         )
@@ -29,10 +29,10 @@ class TestRagSummary:
             "Expected summary/generation in response"
         )
 
-    def test_summary_response_time(self, client, seeded_corpus):
+    def test_summary_response_time(self, client, seeded_shared_corpus):
         """Test that RAG summarization completes in acceptable time."""
         response = client.query_with_summary(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="What are the main topics covered?",
             max_results=3,
         )

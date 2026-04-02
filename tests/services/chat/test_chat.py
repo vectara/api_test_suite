@@ -15,10 +15,10 @@ import pytest
 class TestChat:
     """Core checks for chat/conversation operations."""
 
-    def test_create_chat(self, client, seeded_corpus):
+    def test_create_chat(self, client, seeded_shared_corpus):
         """Test starting a new chat conversation."""
         response = client.create_chat(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="Tell me about AI",
         )
 
@@ -47,11 +47,11 @@ class TestChat:
             f"List chats failed: {response.status_code} - {response.data}"
         )
 
-    def test_chat_turn(self, client, seeded_corpus):
+    def test_chat_turn(self, client, seeded_shared_corpus):
         """Test adding turns to a chat conversation."""
         # Create chat
         create_response = client.create_chat(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="What is machine learning?",
         )
 
@@ -67,7 +67,7 @@ class TestChat:
             turn_response = client.add_chat_turn(
                 chat_id=chat_id,
                 query_text="Can you give me an example?",
-                corpus_key=seeded_corpus,
+                corpus_key=seeded_shared_corpus,
             )
 
             assert turn_response.success, (
@@ -77,11 +77,11 @@ class TestChat:
             # Cleanup
             client.delete_chat(chat_id)
 
-    def test_delete_chat(self, client, seeded_corpus):
+    def test_delete_chat(self, client, seeded_shared_corpus):
         """Test deleting a chat conversation."""
         # Create chat
         create_response = client.create_chat(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="Test chat for deletion",
         )
 

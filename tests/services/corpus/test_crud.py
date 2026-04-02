@@ -15,8 +15,11 @@ class TestCorpusCrudSanity:
 
     def test_create_corpus(self, client, unique_id):
         """Test creating a new corpus."""
+        import uuid
+        corpus_key = f"crud_test_{uuid.uuid4().hex}"
         response = client.create_corpus(
             name=f"Test Corpus {unique_id}",
+            key=corpus_key,
             description="Created by API test suite",
         )
 
@@ -71,9 +74,12 @@ class TestCorpusCrudCore:
 
     def test_delete_corpus(self, client, unique_id):
         """Test corpus deletion."""
+        import uuid
+        corpus_key = f"del_test_{uuid.uuid4().hex}"
         # Create corpus to delete
         create_response = client.create_corpus(
             name=f"Delete Test {unique_id}",
+            key=corpus_key,
             description="Will be deleted",
         )
         assert create_response.success, f"Setup: Corpus creation failed: {create_response.data}"

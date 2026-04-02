@@ -1,11 +1,13 @@
 """
 Agent-specific fixtures.
 
-Provides a seeded corpus with agent-focused documents and a reusable
-test agent for execution and session tests.
+Provides a module-scoped corpus with agent-focused documents and a reusable
+shared agent for execution and session tests.  CRUD tests create their own
+agents per-test since they mutate agent state.
 """
 
 import time
+import uuid
 import logging
 
 import pytest
@@ -13,103 +15,101 @@ import pytest
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture
-def seeded_corpus_for_agents(client, test_corpus):
-    """Seed the test corpus with documents for agent testing.
+@pytest.fixture(scope="module")
+def shared_agent_corpus(client):
+    """Module-scoped corpus with agent-focused docs."""
+    corpus_key = f"agent_corpus_{uuid.uuid4().hex}"
 
-    Yields the corpus key string.
-    """
-    documents = [
+    response = client.create_corpus(
+        name=f"Agent Test Corpus {uuid.uuid4().hex[:8]}",
+        key=corpus_key,
+        description="Shared agent test corpus",
+    )
+    if not response.success:
+        pytest.skip(f"Could not create agent corpus: {response.data}")
+
+    actual_key = response.data.get("key", corpus_key)
+
+    docs = [
         {
-            "id": "agent_doc_1",
-            "text": (
-                "Vectara is a trusted AI platform for enterprise search and RAG applications. "
-                "It provides semantic search, summarization, and conversational AI capabilities. "
-                "Vectara supports both SaaS and on-premise deployments for enterprise customers."
-            ),
-            "metadata": {"category": "product", "topic": "overview"},
+            "id": f"agent_doc_{uuid.uuid4().hex[:8]}",
+            "text": "Vectara is a trusted AI platform for enterprise search and RAG applications.",
+            "metadata": {"topic": "overview"},
         },
         {
-            "id": "agent_doc_2",
-            "text": (
-                "To get started with Vectara, you need to create an account and obtain an API key. "
-                "The API key should have QueryService and IndexService permissions for full functionality. "
-                "You can then use the REST API or SDKs to index documents and run queries."
-            ),
-            "metadata": {"category": "documentation", "topic": "getting_started"},
+            "id": f"agent_doc_{uuid.uuid4().hex[:8]}",
+            "text": "To get started with Vectara, create an account and obtain an API key with QueryService and IndexService permissions.",
+            "metadata": {"topic": "getting_started"},
         },
         {
-            "id": "agent_doc_3",
-            "text": (
-                "Vectara agents provide conversational AI experiences. Agents maintain context "
-                "across multiple turns of conversation, allowing for natural follow-up questions. "
-                "Each agent can be configured with specific corpora and generation settings."
-            ),
-            "metadata": {"category": "documentation", "topic": "agents"},
+            "id": f"agent_doc_{uuid.uuid4().hex[:8]}",
+            "text": "Vectara agents provide conversational AI experiences maintaining context across multiple turns.",
+            "metadata": {"topic": "agents"},
         },
     ]
 
     doc_ids = []
-
-    # Index all documents
-    for doc in documents:
-        response = client.index_document(
-            corpus_key=test_corpus,
+    for doc in docs:
+        resp = client.index_document(
+            corpus_key=actual_key,
             document_id=doc["id"],
             text=doc["text"],
             metadata=doc["metadata"],
         )
-        if response.success:
+        if resp.success:
             doc_ids.append(doc["id"])
-        else:
-            logger.warning("Failed to seed agent document %s: %s", doc["id"], response.data)
 
-    if not doc_ids:
-        pytest.skip("Could not seed any documents for agents")
-
-    # Allow time for indexing
     time.sleep(2)
 
+    yield actual_key
+
+    for doc_id in doc_ids:
+        try:
+            client.delete_document(actual_key, doc_id)
+        except Exception:
+            pass
     try:
-        yield test_corpus
-    finally:
-        for doc_id in doc_ids:
-            try:
-                client.delete_document(test_corpus, doc_id)
-            except Exception:
-                logger.warning("Failed to clean up agent document %s", doc_id, exc_info=True)
+        client.delete_corpus(actual_key)
+    except Exception:
+        pass
 
 
-@pytest.fixture
-def test_agent(client, seeded_corpus_for_agents, unique_id):
-    """Create a test agent for execution tests.
+@pytest.fixture(scope="module")
+def shared_agent(client, shared_agent_corpus):
+    """Module-scoped agent for execution and session tests.
 
-    Yields the agent ID string.
+    Do NOT use for tests that mutate agent properties (update, delete, identity).
+    Those tests should create their own agent.
     """
+    agent_key = f"test_agent_{uuid.uuid4().hex[:8]}"
+
     response = client.create_agent(
-        name=f"Execution Test Agent {unique_id}",
-        corpus_keys=[seeded_corpus_for_agents],
-        description="Agent for execution testing",
+        name=f"Shared Test Agent {uuid.uuid4().hex[:8]}",
+        corpus_keys=[shared_agent_corpus],
+        description="Shared agent for execution testing",
     )
 
     # Fallback to minimal agent
     if not response.success:
         response = client.create_agent(
-            name=f"Execution Test Agent {unique_id}",
-            description="Agent for execution testing",
+            name=f"Shared Test Agent {uuid.uuid4().hex[:8]}",
+            description="Shared agent for execution testing",
         )
 
     if not response.success:
-        pytest.skip(f"Could not create test agent: {response.data}")
+        pytest.skip(f"Could not create shared agent: {response.data}")
 
-    agent_id = response.data.get("id") or response.data.get("agent_id") or response.data.get("key")
+    agent_id = (
+        response.data.get("id")
+        or response.data.get("agent_id")
+        or response.data.get("key")
+    )
     if not agent_id:
-        pytest.skip("No agent_id in create response")
+        pytest.skip("No agent key in response")
+
+    yield agent_id
 
     try:
-        yield agent_id
-    finally:
-        try:
-            client.delete_agent(agent_id)
-        except Exception:
-            logger.warning("Failed to clean up test agent %s", agent_id, exc_info=True)
+        client.delete_agent(agent_id)
+    except Exception:
+        pass

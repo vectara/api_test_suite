@@ -14,8 +14,11 @@ class TestFilterAttributes:
 
     def test_create_corpus_with_metadata(self, client, unique_id):
         """Test creating a corpus with custom filter attributes."""
+        import uuid
+        corpus_key = f"meta_test_{uuid.uuid4().hex}"
         response = client.create_corpus(
             name=f"Metadata Corpus {unique_id}",
+            key=corpus_key,
             description="Corpus with filter attributes",
             filter_attributes=[
                 {

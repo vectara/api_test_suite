@@ -12,10 +12,10 @@ import pytest
 class TestQueryFiltering:
     """Regression checks for query edge cases and filtering."""
 
-    def test_query_empty_results(self, client, seeded_corpus):
+    def test_query_empty_results(self, client, seeded_shared_corpus):
         """Test query that returns no relevant results."""
         response = client.query(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="quantum teleportation through wormholes in the 15th century",
             limit=5,
         )
@@ -23,10 +23,10 @@ class TestQueryFiltering:
         assert response.success, f"Query failed: {response.status_code}"
         # Query should succeed even with no/few relevant results
 
-    def test_query_special_characters(self, client, seeded_corpus):
+    def test_query_special_characters(self, client, seeded_shared_corpus):
         """Test query with special characters."""
         response = client.query(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="What's the purpose of AI & machine-learning?",
             limit=3,
         )
@@ -35,10 +35,10 @@ class TestQueryFiltering:
             f"Query with special characters failed: {response.status_code}"
         )
 
-    def test_query_unicode(self, client, seeded_corpus):
+    def test_query_unicode(self, client, seeded_shared_corpus):
         """Test query with unicode characters."""
         response = client.query(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="intelig\u00eancia artificial e aprendizado de m\u00e1quina",
             limit=3,
         )
@@ -47,7 +47,7 @@ class TestQueryFiltering:
             f"Query with unicode failed: {response.status_code}"
         )
 
-    def test_query_long_text(self, client, seeded_corpus):
+    def test_query_long_text(self, client, seeded_shared_corpus):
         """Test query with longer query text."""
         long_query = (
             "I am interested in learning about how artificial intelligence and "
@@ -57,7 +57,7 @@ class TestQueryFiltering:
         )
 
         response = client.query(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text=long_query,
             limit=5,
         )
@@ -66,10 +66,10 @@ class TestQueryFiltering:
             f"Long query failed: {response.status_code}"
         )
 
-    def test_query_response_time(self, client, seeded_corpus):
+    def test_query_response_time(self, client, seeded_shared_corpus):
         """Test that queries complete in acceptable time."""
         response = client.query(
-            corpus_key=seeded_corpus,
+            corpus_key=seeded_shared_corpus,
             query_text="artificial intelligence",
             limit=5,
         )

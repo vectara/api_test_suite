@@ -25,13 +25,13 @@ class TestAgentCrudSanity:
 class TestAgentCrudCore:
     """Core-level agent CRUD checks."""
 
-    def test_create_agent(self, client, seeded_corpus_for_agents, unique_id):
+    def test_create_agent(self, client, shared_agent_corpus, unique_id):
         """Test creating a new agent."""
         agent_name = f"Test Agent {unique_id}"
 
         response = client.create_agent(
             name=agent_name,
-            corpus_keys=[seeded_corpus_for_agents],
+            corpus_keys=[shared_agent_corpus],
             description="Test agent created by API test suite",
         )
 
@@ -47,13 +47,13 @@ class TestAgentCrudCore:
             except Exception:
                 pass
 
-    def test_create_agent_with_config(self, client, seeded_corpus_for_agents, unique_id):
+    def test_create_agent_with_config(self, client, shared_agent_corpus, unique_id):
         """Test creating an agent with custom configuration."""
         agent_name = f"Configured Agent {unique_id}"
 
         response = client.create_agent(
             name=agent_name,
-            corpus_keys=[seeded_corpus_for_agents],
+            corpus_keys=[shared_agent_corpus],
             description="Agent with custom settings",
         )
 
@@ -68,12 +68,12 @@ class TestAgentCrudCore:
             except Exception:
                 pass
 
-    def test_get_agent(self, client, seeded_corpus_for_agents, unique_id):
+    def test_get_agent(self, client, shared_agent_corpus, unique_id):
         """Test retrieving agent details."""
         # First create an agent
         create_response = client.create_agent(
             name=f"Get Test Agent {unique_id}",
-            corpus_keys=[seeded_corpus_for_agents],
+            corpus_keys=[shared_agent_corpus],
         )
 
         # Fallback to minimal agent
@@ -100,12 +100,12 @@ class TestAgentCrudCore:
             # Cleanup
             client.delete_agent(agent_id)
 
-    def test_update_agent(self, client, seeded_corpus_for_agents, unique_id):
+    def test_update_agent(self, client, shared_agent_corpus, unique_id):
         """Test updating an agent."""
         # Create agent
         create_response = client.create_agent(
             name=f"Update Test Agent {unique_id}",
-            corpus_keys=[seeded_corpus_for_agents],
+            corpus_keys=[shared_agent_corpus],
             description="Original description",
         )
 
@@ -138,12 +138,12 @@ class TestAgentCrudCore:
             # Cleanup
             client.delete_agent(agent_id)
 
-    def test_delete_agent(self, client, seeded_corpus_for_agents, unique_id):
+    def test_delete_agent(self, client, shared_agent_corpus, unique_id):
         """Test deleting an agent."""
         # Create agent to delete
         create_response = client.create_agent(
             name=f"Delete Test Agent {unique_id}",
-            corpus_keys=[seeded_corpus_for_agents],
+            corpus_keys=[shared_agent_corpus],
         )
 
         # Fallback to minimal agent
