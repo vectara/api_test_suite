@@ -65,9 +65,7 @@ class TestLargeDocuments:
 
         # Wait for indexing to complete
         wait_for(
-            lambda: any(
-                d.get("id") in doc_ids for d in client.list_documents(shared_corpus, limit=100).data.get("documents", []) if isinstance(d, dict)
-            ),
+            lambda: any(d.get("id") in doc_ids for d in client.list_documents(shared_corpus, limit=100).data.get("documents", []) if isinstance(d, dict)),
             timeout=15,
             interval=1,
             description="indexed documents to appear in listing",
