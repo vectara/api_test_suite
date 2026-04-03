@@ -31,9 +31,7 @@ class TestQueryFiltering:
             limit=3,
         )
 
-        assert response.success, (
-            f"Query with special characters failed: {response.status_code}"
-        )
+        assert response.success, f"Query with special characters failed: {response.status_code}"
 
     def test_query_unicode(self, client, seeded_shared_corpus):
         """Test query with unicode characters."""
@@ -43,9 +41,7 @@ class TestQueryFiltering:
             limit=3,
         )
 
-        assert response.success, (
-            f"Query with unicode failed: {response.status_code}"
-        )
+        assert response.success, f"Query with unicode failed: {response.status_code}"
 
     def test_query_long_text(self, client, seeded_shared_corpus):
         """Test query with longer query text."""
@@ -62,9 +58,7 @@ class TestQueryFiltering:
             limit=5,
         )
 
-        assert response.success, (
-            f"Long query failed: {response.status_code}"
-        )
+        assert response.success, f"Long query failed: {response.status_code}"
 
     def test_query_response_time(self, client, seeded_shared_corpus):
         """Test that queries complete in acceptable time."""
@@ -75,9 +69,7 @@ class TestQueryFiltering:
         )
 
         assert response.success, f"Query failed: {response.status_code}"
-        assert response.elapsed_ms < 5000, (
-            f"Query took too long: {response.elapsed_ms:.1f}ms"
-        )
+        assert response.elapsed_ms < 5000, f"Query took too long: {response.elapsed_ms:.1f}ms"
 
     def test_query_nonexistent_corpus(self, client):
         """Test querying a non-existent corpus."""
@@ -88,6 +80,4 @@ class TestQueryFiltering:
         )
 
         assert not response.success, "Query to non-existent corpus should fail"
-        assert response.status_code in [400, 404], (
-            f"Expected 400 or 404, got {response.status_code}"
-        )
+        assert response.status_code in [400, 404], f"Expected 400 or 404, got {response.status_code}"

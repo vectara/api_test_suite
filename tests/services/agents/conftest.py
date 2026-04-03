@@ -6,9 +6,9 @@ shared agent for execution and session tests.  CRUD tests create their own
 agents per-test since they mutate agent state.
 """
 
+import logging
 import time
 import uuid
-import logging
 
 import pytest
 
@@ -99,11 +99,7 @@ def shared_agent(client, shared_agent_corpus):
     if not response.success:
         pytest.skip(f"Could not create shared agent: {response.data}")
 
-    agent_id = (
-        response.data.get("id")
-        or response.data.get("agent_id")
-        or response.data.get("key")
-    )
+    agent_id = response.data.get("id") or response.data.get("agent_id") or response.data.get("key")
     if not agent_id:
         pytest.skip("No agent key in response")
 

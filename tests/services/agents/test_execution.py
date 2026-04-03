@@ -19,9 +19,7 @@ class TestAgentExecution:
             query_text="What is Vectara?",
         )
 
-        assert response.success, (
-            f"Agent execution failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"Agent execution failed: {response.status_code} - {response.data}"
 
     def test_execute_agent_with_context(self, client, shared_agent):
         """Test multi-turn conversation with an agent."""
@@ -31,9 +29,7 @@ class TestAgentExecution:
             query_text="Tell me about Vectara agents.",
         )
 
-        assert response1.success, (
-            f"First turn failed: {response1.status_code} - {response1.data}"
-        )
+        assert response1.success, f"First turn failed: {response1.status_code} - {response1.data}"
 
         # Get session ID if available for follow-up
         session_id = response1.data.get("session_id")
@@ -45,9 +41,7 @@ class TestAgentExecution:
             session_id=session_id,
         )
 
-        assert response2.success, (
-            f"Follow-up turn failed: {response2.status_code} - {response2.data}"
-        )
+        assert response2.success, f"Follow-up turn failed: {response2.status_code} - {response2.data}"
 
     def test_execute_agent_response_time(self, client, shared_agent):
         """Test that agent execution completes in acceptable time."""
@@ -59,9 +53,7 @@ class TestAgentExecution:
         assert response.success, f"Agent execution failed: {response.status_code}"
 
         # Agent responses involve LLM generation, allow more time
-        assert response.elapsed_ms < 60000, (
-            f"Agent execution took too long: {response.elapsed_ms:.1f}ms"
-        )
+        assert response.elapsed_ms < 60000, f"Agent execution took too long: {response.elapsed_ms:.1f}ms"
 
 
 @pytest.mark.regression
@@ -76,9 +68,7 @@ class TestAgentExecutionEdgeCases:
         )
 
         assert not response.success, "Execution against non-existent agent should fail"
-        assert response.status_code in [400, 404], (
-            f"Expected 400 or 404, got {response.status_code}"
-        )
+        assert response.status_code in [400, 404], f"Expected 400 or 404, got {response.status_code}"
 
     def test_agent_handles_special_characters(self, client, shared_agent):
         """Test agent handles queries with special characters."""
@@ -87,9 +77,7 @@ class TestAgentExecutionEdgeCases:
             query_text="What's Vectara's approach to AI & machine-learning?",
         )
 
-        assert response.success, (
-            f"Special character query failed: {response.status_code}"
-        )
+        assert response.success, f"Special character query failed: {response.status_code}"
 
     def test_agent_handles_long_query(self, client, shared_agent):
         """Test agent handles longer queries."""
@@ -105,6 +93,4 @@ class TestAgentExecutionEdgeCases:
             query_text=long_query,
         )
 
-        assert response.success, (
-            f"Long query failed: {response.status_code}"
-        )
+        assert response.success, f"Long query failed: {response.status_code}"

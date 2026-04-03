@@ -22,6 +22,4 @@ class TestAgentSessions:
         # List sessions
         response = client.list_agent_sessions(shared_agent, limit=10)
 
-        assert response.success, (
-            f"List sessions failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"List sessions failed: {response.status_code} - {response.data}"

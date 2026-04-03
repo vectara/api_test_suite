@@ -8,9 +8,9 @@ Also provides module-scoped shared fixtures for tests that just need a corpus
 as a container (indexing, query, chat) but don't test corpus CRUD itself.
 """
 
+import logging
 import time
 import uuid
-import logging
 
 import pytest
 
@@ -60,26 +60,17 @@ def seeded_corpus(client, test_corpus):
     docs = [
         {
             "id": f"seed_doc_{uuid.uuid4().hex[:8]}",
-            "text": (
-                "Artificial intelligence is transforming industries by enabling "
-                "machines to learn from data and make decisions."
-            ),
+            "text": ("Artificial intelligence is transforming industries by enabling " "machines to learn from data and make decisions."),
             "metadata": {"topic": "ai", "source": "seed"},
         },
         {
             "id": f"seed_doc_{uuid.uuid4().hex[:8]}",
-            "text": (
-                "Vector databases store high-dimensional embeddings and support "
-                "fast similarity search for semantic retrieval."
-            ),
+            "text": ("Vector databases store high-dimensional embeddings and support " "fast similarity search for semantic retrieval."),
             "metadata": {"topic": "databases", "source": "seed"},
         },
         {
             "id": f"seed_doc_{uuid.uuid4().hex[:8]}",
-            "text": (
-                "Cloud computing provides scalable infrastructure that allows "
-                "organizations to deploy applications globally."
-            ),
+            "text": ("Cloud computing provides scalable infrastructure that allows " "organizations to deploy applications globally."),
             "metadata": {"topic": "cloud", "source": "seed"},
         },
     ]

@@ -8,16 +8,15 @@ Provides a clean interface for all Vectara API operations with:
 - Response time tracking
 """
 
-import time
 import logging
-from typing import Any, Optional
+import time
 from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any, Optional
 
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
-
-from pathlib import Path
 
 from .config import Config
 
@@ -228,9 +227,7 @@ class VectaraClient:
     # Convenience methods for HTTP verbs
     # -------------------------------------------------------------------------
 
-    def get(
-        self, endpoint: str, params: Optional[dict] = None, **kwargs
-    ) -> APIResponse:
+    def get(self, endpoint: str, params: Optional[dict] = None, **kwargs) -> APIResponse:
         """Make a GET request."""
         return self._request("GET", endpoint, params=params, **kwargs)
 
@@ -242,9 +239,7 @@ class VectaraClient:
         """Make a PUT request."""
         return self._request("PUT", endpoint, data=data, **kwargs)
 
-    def patch(
-        self, endpoint: str, data: Optional[dict] = None, **kwargs
-    ) -> APIResponse:
+    def patch(self, endpoint: str, data: Optional[dict] = None, **kwargs) -> APIResponse:
         """Make a PATCH request."""
         return self._request("PATCH", endpoint, data=data, **kwargs)
 
@@ -292,9 +287,7 @@ class VectaraClient:
     # Vectara API Operations - Corpora
     # -------------------------------------------------------------------------
 
-    def list_corpora(
-        self, limit: int = 100, page_key: Optional[str] = None
-    ) -> APIResponse:
+    def list_corpora(self, limit: int = 100, page_key: Optional[str] = None) -> APIResponse:
         """List all corpora for the customer."""
         params = {"limit": limit}
         if page_key:
@@ -466,9 +459,7 @@ class VectaraClient:
         """Delete a chat conversation."""
         return self.delete(f"/v2/chats/{chat_id}")
 
-    def add_chat_turn(
-        self, chat_id: str, query_text: str, corpus_key: str, **kwargs
-    ) -> APIResponse:
+    def add_chat_turn(self, chat_id: str, query_text: str, corpus_key: str, **kwargs) -> APIResponse:
         """Add a turn to an existing chat."""
         data = {
             "query": query_text,
@@ -594,15 +585,11 @@ class VectaraClient:
             session_response = self.create_agent_session(agent_id)
             if not session_response.success:
                 return session_response
-            session_id = session_response.data.get("key") or session_response.data.get(
-                "session_key"
-            )
+            session_id = session_response.data.get("key") or session_response.data.get("session_key")
             if not session_id:
                 return APIResponse(
                     status_code=500,
-                    data={
-                        "error": f"No session key in response: {session_response.data}"
-                    },
+                    data={"error": f"No session key in response: {session_response.data}"},
                     elapsed_ms=0,
                 )
 
@@ -614,9 +601,7 @@ class VectaraClient:
             if not verify_response.success:
                 return APIResponse(
                     status_code=500,
-                    data={
-                        "error": f"Session {session_id} created but verification failed: {verify_response.data}"
-                    },
+                    data={"error": f"Session {session_id} created but verification failed: {verify_response.data}"},
                     elapsed_ms=0,
                 )
 
@@ -631,9 +616,7 @@ class VectaraClient:
             ],
             **kwargs,
         }
-        return self.post(
-            f"/v2/agents/{agent_id}/sessions/{session_id}/events", data=data
-        )
+        return self.post(f"/v2/agents/{agent_id}/sessions/{session_id}/events", data=data)
 
     def list_agent_sessions(self, agent_id: str, limit: int = 100) -> APIResponse:
         """List sessions for an agent."""

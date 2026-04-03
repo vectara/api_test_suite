@@ -41,10 +41,7 @@ def wait_for(
             return last_result
 
         if time.monotonic() >= deadline:
-            raise TimeoutError(
-                f"Timed out after {timeout}s waiting for {description}. "
-                f"Last state: {last_result!r}"
-            )
+            raise TimeoutError(f"Timed out after {timeout}s waiting for {description}. " f"Last state: {last_result!r}")
 
         remaining = deadline - time.monotonic()
         time.sleep(min(interval, max(remaining, 0)))

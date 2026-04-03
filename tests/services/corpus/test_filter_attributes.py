@@ -15,6 +15,7 @@ class TestFilterAttributes:
     def test_create_corpus_with_metadata(self, client, unique_id):
         """Test creating a corpus with custom filter attributes."""
         import uuid
+
         corpus_key = f"meta_test_{uuid.uuid4().hex}"
         response = client.create_corpus(
             name=f"Metadata Corpus {unique_id}",
@@ -34,9 +35,7 @@ class TestFilterAttributes:
             ],
         )
 
-        assert response.success, (
-            f"Corpus creation with metadata failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"Corpus creation with metadata failed: {response.status_code} - {response.data}"
 
         # Cleanup using the actual key
         actual_key = response.data.get("key")

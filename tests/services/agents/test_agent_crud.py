@@ -4,8 +4,9 @@ Agent CRUD Tests
 Tests for agent create, read, update, delete, and listing operations.
 """
 
-import pytest
 import time
+
+import pytest
 
 
 @pytest.mark.sanity
@@ -16,9 +17,7 @@ class TestAgentList:
         """Test listing all agents."""
         response = client.list_agents(limit=10)
 
-        assert response.success, (
-            f"List agents failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"List agents failed: {response.status_code} - {response.data}"
 
 
 @pytest.mark.core
@@ -35,9 +34,7 @@ class TestAgentCrud:
             description="Test agent created by API test suite",
         )
 
-        assert response.success, (
-            f"Create agent failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"Create agent failed: {response.status_code} - {response.data}"
 
         # Get agent ID for cleanup
         agent_id = response.data.get("id") or response.data.get("agent_id") or response.data.get("key")
@@ -57,9 +54,7 @@ class TestAgentCrud:
             description="Agent with custom settings",
         )
 
-        assert response.success, (
-            f"Create configured agent failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"Create configured agent failed: {response.status_code} - {response.data}"
 
         agent_id = response.data.get("id") or response.data.get("agent_id") or response.data.get("key")
         if agent_id:
@@ -93,9 +88,7 @@ class TestAgentCrud:
             # Get the agent
             response = client.get_agent(agent_id)
 
-            assert response.success, (
-                f"Get agent failed: {response.status_code} - {response.data}"
-            )
+            assert response.success, f"Get agent failed: {response.status_code} - {response.data}"
         finally:
             # Cleanup
             client.delete_agent(agent_id)
@@ -131,9 +124,7 @@ class TestAgentCrud:
                 description=new_description,
             )
 
-            assert update_response.success, (
-                f"Update agent failed: {update_response.status_code} - {update_response.data}"
-            )
+            assert update_response.success, f"Update agent failed: {update_response.status_code} - {update_response.data}"
         finally:
             # Cleanup
             client.delete_agent(agent_id)
@@ -162,12 +153,8 @@ class TestAgentCrud:
         # Delete the agent
         delete_response = client.delete_agent(agent_id)
 
-        assert delete_response.success, (
-            f"Delete agent failed: {delete_response.status_code} - {delete_response.data}"
-        )
+        assert delete_response.success, f"Delete agent failed: {delete_response.status_code} - {delete_response.data}"
 
         # Verify deletion
         get_response = client.get_agent(agent_id)
-        assert get_response.status_code == 404, (
-            f"Deleted agent should return 404, got {get_response.status_code}"
-        )
+        assert get_response.status_code == 404, f"Deleted agent should return 404, got {get_response.status_code}"

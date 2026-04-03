@@ -5,8 +5,9 @@ Core-level tests for indexing documents with custom metadata,
 special characters, and verifying indexing response times.
 """
 
-import pytest
 import time
+
+import pytest
 
 
 @pytest.mark.core
@@ -30,9 +31,7 @@ class TestDocumentMetadata:
             },
         )
 
-        assert response.success, (
-            f"Document with metadata indexing failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"Document with metadata indexing failed: {response.status_code} - {response.data}"
 
     def test_index_document_special_characters(self, client, shared_corpus, unique_id):
         """Test indexing document with special characters."""
@@ -53,9 +52,7 @@ class TestDocumentMetadata:
             text=special_text,
         )
 
-        assert response.success, (
-            f"Special characters document indexing failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"Special characters document indexing failed: {response.status_code} - {response.data}"
 
     def test_indexing_response_time(self, client, shared_corpus, unique_id):
         """Test that indexing completes in acceptable time."""
@@ -68,6 +65,4 @@ class TestDocumentMetadata:
         )
 
         assert response.success, f"Indexing failed: {response.status_code}"
-        assert response.elapsed_ms < 10000, (
-            f"Indexing took too long: {response.elapsed_ms:.1f}ms"
-        )
+        assert response.elapsed_ms < 10000, f"Indexing took too long: {response.elapsed_ms:.1f}ms"

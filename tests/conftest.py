@@ -6,10 +6,10 @@ every service test carries exactly one of them, and provides session- and
 per-test fixtures shared across all test directories.
 """
 
+import logging
 import os
 import sys
 import uuid
-import logging
 from pathlib import Path
 
 import pytest
@@ -20,13 +20,13 @@ import pytest
 # ---------------------------------------------------------------------------
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from utils.config import Config
 from utils.client import VectaraClient
-
+from utils.config import Config
 
 # ---------------------------------------------------------------------------
 # CLI options
 # ---------------------------------------------------------------------------
+
 
 def pytest_addoption(parser):
     """Add custom command-line options."""
@@ -62,6 +62,7 @@ def pytest_addoption(parser):
 
 DEPTH_MARKERS = {"sanity", "core", "regression"}
 
+
 def pytest_configure(config):
     """Set env vars from CLI options and register custom markers."""
     # Logging
@@ -92,6 +93,7 @@ def pytest_configure(config):
 # Collection-time validation
 # ---------------------------------------------------------------------------
 
+
 def pytest_collection_modifyitems(config, items):
     """Fail collection for any service test that has zero or multiple depth markers.
 
@@ -112,15 +114,9 @@ def pytest_collection_modifyitems(config, items):
         depth_hits = marker_names & DEPTH_MARKERS
 
         if len(depth_hits) == 0:
-            errors.append(
-                f"{item.nodeid}: missing depth marker (add @pytest.mark.sanity, "
-                f"@pytest.mark.core, or @pytest.mark.regression)"
-            )
+            errors.append(f"{item.nodeid}: missing depth marker (add @pytest.mark.sanity, " f"@pytest.mark.core, or @pytest.mark.regression)")
         elif len(depth_hits) > 1:
-            errors.append(
-                f"{item.nodeid}: multiple depth markers ({', '.join(sorted(depth_hits))}); "
-                f"use exactly one"
-            )
+            errors.append(f"{item.nodeid}: multiple depth markers ({', '.join(sorted(depth_hits))}); " f"use exactly one")
 
     if errors:
         msg = "Depth-marker violations:\n  " + "\n  ".join(errors)
@@ -130,6 +126,7 @@ def pytest_collection_modifyitems(config, items):
 # ---------------------------------------------------------------------------
 # Session-scoped fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(scope="session")
 def config():
@@ -152,6 +149,7 @@ def test_run_id():
 # ---------------------------------------------------------------------------
 # Per-test fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def unique_id():
@@ -187,6 +185,7 @@ def sample_query():
 # HTML report hooks
 # ---------------------------------------------------------------------------
 
+
 def pytest_html_report_title(report):
     """Set custom report title."""
     report.title = "Vectara API Test Suite Report"
@@ -194,7 +193,9 @@ def pytest_html_report_title(report):
 
 def pytest_html_results_summary(prefix, summary, postfix):
     """Add custom summary to HTML report."""
-    prefix.extend([
-        "<p>This report validates Vectara API functionality for upgrade verification.</p>",
-        "<p>Tests cover: Authentication, Corpus Management, Indexing, Query/Search, and Agents APIs.</p>",
-    ])
+    prefix.extend(
+        [
+            "<p>This report validates Vectara API functionality for upgrade verification.</p>",
+            "<p>Tests cover: Authentication, Corpus Management, Indexing, Query/Search, and Agents APIs.</p>",
+        ]
+    )

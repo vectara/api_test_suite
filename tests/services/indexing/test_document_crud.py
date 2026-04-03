@@ -22,9 +22,7 @@ class TestDocumentIndex:
             metadata=sample_document["metadata"],
         )
 
-        assert response.success, (
-            f"Document indexing failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"Document indexing failed: {response.status_code} - {response.data}"
 
 
 @pytest.mark.core
@@ -46,12 +44,8 @@ class TestDocumentCrud:
         # Retrieve the document
         response = client.get_document(shared_corpus, doc_id)
 
-        assert response.success, (
-            f"Get document failed: {response.status_code} - {response.data}"
-        )
-        assert response.data.get("id") == doc_id, (
-            f"Document ID mismatch: expected {doc_id}"
-        )
+        assert response.success, f"Get document failed: {response.status_code} - {response.data}"
+        assert response.data.get("id") == doc_id, f"Document ID mismatch: expected {doc_id}"
 
     def test_delete_document(self, client, shared_corpus, unique_id):
         """Test deleting a document."""
@@ -68,15 +62,11 @@ class TestDocumentCrud:
         # Delete document
         delete_response = client.delete_document(shared_corpus, doc_id)
 
-        assert delete_response.success, (
-            f"Document deletion failed: {delete_response.status_code} - {delete_response.data}"
-        )
+        assert delete_response.success, f"Document deletion failed: {delete_response.status_code} - {delete_response.data}"
 
         # Verify deletion - should get 404
         get_response = client.get_document(shared_corpus, doc_id)
-        assert get_response.status_code == 404, (
-            f"Deleted document should return 404, got {get_response.status_code}"
-        )
+        assert get_response.status_code == 404, f"Deleted document should return 404, got {get_response.status_code}"
 
     def test_update_document_by_delete_and_reindex(self, client, shared_corpus, unique_id):
         """Test updating a document by deleting and re-indexing."""
@@ -103,6 +93,4 @@ class TestDocumentCrud:
             metadata={"version": 2},
         )
 
-        assert update_response.success, (
-            f"Document re-index failed: {update_response.status_code} - {update_response.data}"
-        )
+        assert update_response.success, f"Document re-index failed: {update_response.status_code} - {update_response.data}"

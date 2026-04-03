@@ -23,17 +23,18 @@ Usage:
     python run_tests.py --html-report
 """
 
-import os
-import sys
 import argparse
+import os
 import subprocess
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 try:
     from rich.console import Console
     from rich.panel import Panel
     from rich.table import Table
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
@@ -61,11 +62,12 @@ def get_console():
 def print_header(console):
     """Print welcome header."""
     if console:
-        console.print(Panel.fit(
-            "[bold blue]Vectara API Test Suite[/bold blue]\n"
-            "[dim]Comprehensive API validation for upgrade verification[/dim]",
-            border_style="blue",
-        ))
+        console.print(
+            Panel.fit(
+                "[bold blue]Vectara API Test Suite[/bold blue]\n" "[dim]Comprehensive API validation for upgrade verification[/dim]",
+                border_style="blue",
+            )
+        )
     else:
         print("=" * 50)
         print("Vectara API Test Suite")
@@ -101,7 +103,7 @@ def build_pytest_args(args, services, profile):
     """
     # --- common flags shared by every phase ---
     common = [
-        "-v",          # Verbose output
+        "-v",  # Verbose output
         "--tb=short",  # Shorter tracebacks
     ]
 
@@ -233,11 +235,13 @@ Environment Variables:
 
     # Credential arguments
     parser.add_argument(
-        "--api-key", "-k",
+        "--api-key",
+        "-k",
         help="Vectara Personal API key (or set VECTARA_API_KEY env var)",
     )
     parser.add_argument(
-        "--base-url", "-u",
+        "--base-url",
+        "-u",
         help="Vectara API base URL for on-premise (default: https://api.vectara.io)",
     )
 
@@ -259,11 +263,13 @@ Environment Variables:
         help="Test depth profile (default: core)",
     )
     parser.add_argument(
-        "--service", "-s",
+        "--service",
+        "-s",
         help="Comma-separated list of services to test: " + ",".join(AVAILABLE_SERVICES),
     )
     parser.add_argument(
-        "--tests", "-t",
+        "--tests",
+        "-t",
         help="(Deprecated, use --service) Comma-separated list of services to test",
     )
 
@@ -281,7 +287,8 @@ Environment Variables:
 
     # Execution options
     parser.add_argument(
-        "--parallel", "-p",
+        "--parallel",
+        "-p",
         type=int,
         metavar="N",
         help="Run tests in parallel with N workers",

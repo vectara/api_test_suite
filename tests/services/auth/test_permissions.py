@@ -30,10 +30,7 @@ class TestPermissions:
             limit=1,
         )
 
-        assert response.success, (
-            f"QueryService permission check failed: {response.status_code}. "
-            f"Ensure API key has QueryService role enabled."
-        )
+        assert response.success, f"QueryService permission check failed: {response.status_code}. " f"Ensure API key has QueryService role enabled."
 
     def test_api_key_has_index_permission(self, client, shared_corpus):
         """Test that API key has IndexService permission."""
@@ -43,18 +40,11 @@ class TestPermissions:
             text="Testing IndexService permission",
         )
 
-        assert response.success, (
-            f"IndexService permission check failed: {response.status_code}. "
-            f"Ensure API key has IndexService role enabled."
-        )
+        assert response.success, f"IndexService permission check failed: {response.status_code}. " f"Ensure API key has IndexService role enabled."
 
     def test_list_corpora_works(self, client):
         """Test basic corpus listing (requires valid authentication)."""
         response = client.list_corpora(limit=10)
 
-        assert response.success, (
-            f"List corpora failed: {response.status_code} - {response.data}"
-        )
-        assert "corpora" in response.data or isinstance(response.data, list), (
-            "Expected corpora list in response"
-        )
+        assert response.success, f"List corpora failed: {response.status_code} - {response.data}"
+        assert "corpora" in response.data or isinstance(response.data, list), "Expected corpora list in response"

@@ -26,9 +26,7 @@ class TestChat:
         if not response.success and "rephraser" in str(response.data).lower():
             pytest.skip("Chat rephraser not configured on this instance")
 
-        assert response.success, (
-            f"Create chat failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"Create chat failed: {response.status_code} - {response.data}"
 
         # Should return chat ID
         chat_id = response.data.get("chat_id")
@@ -43,9 +41,7 @@ class TestChat:
         """Test listing chat conversations."""
         response = client.list_chats(limit=10)
 
-        assert response.success, (
-            f"List chats failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"List chats failed: {response.status_code} - {response.data}"
 
     def test_chat_turn(self, client, seeded_shared_corpus):
         """Test adding turns to a chat conversation."""
@@ -70,9 +66,7 @@ class TestChat:
                 corpus_key=seeded_shared_corpus,
             )
 
-            assert turn_response.success, (
-                f"Add chat turn failed: {turn_response.status_code} - {turn_response.data}"
-            )
+            assert turn_response.success, f"Add chat turn failed: {turn_response.status_code} - {turn_response.data}"
         finally:
             # Cleanup
             client.delete_chat(chat_id)
@@ -95,6 +89,4 @@ class TestChat:
         # Delete chat
         delete_response = client.delete_chat(chat_id)
 
-        assert delete_response.success, (
-            f"Delete chat failed: {delete_response.status_code} - {delete_response.data}"
-        )
+        assert delete_response.success, f"Delete chat failed: {delete_response.status_code} - {delete_response.data}"

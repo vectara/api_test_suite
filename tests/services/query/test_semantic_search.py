@@ -19,14 +19,10 @@ class TestSemanticSearchBasic:
             limit=5,
         )
 
-        assert response.success, (
-            f"Query failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"Query failed: {response.status_code} - {response.data}"
 
         # Should return search results
-        assert "search_results" in response.data or "results" in response.data, (
-            "Expected search results in response"
-        )
+        assert "search_results" in response.data or "results" in response.data, "Expected search results in response"
 
 
 @pytest.mark.core

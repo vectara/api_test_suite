@@ -20,14 +20,10 @@ class TestRagSummary:
             max_results=3,
         )
 
-        assert response.success, (
-            f"Query with summary failed: {response.status_code} - {response.data}"
-        )
+        assert response.success, f"Query with summary failed: {response.status_code} - {response.data}"
 
         # Should contain generated summary
-        assert "summary" in response.data or "generation" in response.data, (
-            "Expected summary/generation in response"
-        )
+        assert "summary" in response.data or "generation" in response.data, "Expected summary/generation in response"
 
     def test_summary_response_time(self, client, seeded_shared_corpus):
         """Test that RAG summarization completes in acceptable time."""
@@ -39,6 +35,4 @@ class TestRagSummary:
 
         assert response.success, f"Summary query failed: {response.status_code}"
         # RAG takes longer due to LLM generation
-        assert response.elapsed_ms < 30000, (
-            f"Summary took too long: {response.elapsed_ms:.1f}ms"
-        )
+        assert response.elapsed_ms < 30000, f"Summary took too long: {response.elapsed_ms:.1f}ms"
