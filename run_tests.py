@@ -101,25 +101,13 @@ def build_pytest_args(args, services, profile):
     Returns a list of arg-lists (one per phase) when parallel execution splits
     into parallel + sequential phases, otherwise a single-element list.
     """
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
     # --- common flags shared by every phase ---
     common = [
         "-v",  # Verbose output
         "--tb=short",  # Shorter tracebacks
     ]
-
-    # HTML report
-    if args.html_report:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_path = Path("reports") / f"test_report_{timestamp}.html"
-        report_path.parent.mkdir(exist_ok=True)
-        common.extend(["--html", str(report_path), "--self-contained-html"])
-
-    # JSON report
-    if args.json_report:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        json_path = Path("reports") / f"test_results_{timestamp}.json"
-        json_path.parent.mkdir(exist_ok=True)
-        common.extend(["--json-report", f"--json-report-file={json_path}"])
 
     # Pass-through options
     if args.api_key:
@@ -142,6 +130,24 @@ def build_pytest_args(args, services, profile):
     else:
         targets = ["tests/services/"]
 
+    # Build a descriptive label for report filenames
+    if services:
+        report_label = "_".join(services)
+    else:
+        report_label = profile
+
+    def add_report_flags(phase_args, phase_suffix=""):
+        """Add report flags with descriptive filenames."""
+        name = f"{report_label}_{phase_suffix}" if phase_suffix else report_label
+        if args.html_report:
+            report_path = Path("reports") / f"test_report_{timestamp}_{name}.html"
+            report_path.parent.mkdir(exist_ok=True)
+            phase_args.extend(["--html", str(report_path), "--self-contained-html"])
+        if args.json_report:
+            json_path = Path("reports") / f"test_results_{timestamp}_{name}.json"
+            json_path.parent.mkdir(exist_ok=True)
+            phase_args.extend(["--json-report", f"--json-report-file={json_path}"])
+
     # --- build phase(s) ---
     if args.parallel:
         # Phase 1: parallel run (excluding serial-marked tests)
@@ -163,6 +169,13 @@ def build_pytest_args(args, services, profile):
             phase2.append("tests/workflows/")
             phases.append(phase2)
 
+        # Add report flags — one file per phase if multiple, no suffix if single
+        if len(phases) == 1:
+            add_report_flags(phases[0])
+        else:
+            add_report_flags(phases[0], "services")
+            add_report_flags(phases[1], "workflows")
+
         return phases
     else:
         # Single invocation (no parallelism)
@@ -170,6 +183,7 @@ def build_pytest_args(args, services, profile):
         if marker_expr:
             single.extend(["-m", marker_expr])
         single.extend(targets)
+        add_report_flags(single)
         return [single]
 
 
