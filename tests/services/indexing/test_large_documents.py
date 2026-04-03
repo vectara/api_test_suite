@@ -5,9 +5,9 @@ Regression-level tests for indexing large documents, multiple documents,
 listing documents, and edge cases like empty documents.
 """
 
-import time
-
 import pytest
+
+from utils.waiters import wait_for
 
 
 @pytest.mark.regression
@@ -63,8 +63,15 @@ class TestLargeDocuments:
             )
             assert response.success, f"Failed to index {doc_id}: {response.data}"
 
-        # Wait for indexing to complete (documents may not be immediately available)
-        time.sleep(3)
+        # Wait for indexing to complete
+        wait_for(
+            lambda: any(
+                d.get("id") in doc_ids for d in client.list_documents(shared_corpus, limit=100).data.get("documents", []) if isinstance(d, dict)
+            ),
+            timeout=15,
+            interval=1,
+            description="indexed documents to appear in listing",
+        )
 
         # List documents
         response = client.list_documents(shared_corpus, limit=100)

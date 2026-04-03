@@ -216,8 +216,10 @@ class VectaraClient:
             # generate the Content-Type with the correct boundary.
             kwargs["data"] = data
             kwargs["files"] = files
-            # Remove Content-Type so requests sets multipart boundary itself.
-            kwargs["headers"].pop("Content-Type", None)
+            # Set Content-Type to None to override the session-level default
+            # (application/json). This tells requests to omit it entirely and
+            # auto-generate the multipart boundary.
+            kwargs["headers"]["Content-Type"] = None
         else:
             kwargs["json"] = data
 
@@ -593,15 +595,20 @@ class VectaraClient:
                     elapsed_ms=0,
                 )
 
-            # Small delay to ensure session is committed to database
-            time.sleep(0.5)
+            # Wait for session to be committed and queryable
+            from utils.waiters import wait_for
 
-            # Verify session exists before executing
-            verify_response = self.get_agent_session(agent_id, session_id)
-            if not verify_response.success:
+            try:
+                wait_for(
+                    lambda: self.get_agent_session(agent_id, session_id).success,
+                    timeout=10,
+                    interval=0.5,
+                    description=f"agent session {session_id} to become available",
+                )
+            except TimeoutError:
                 return APIResponse(
                     status_code=500,
-                    data={"error": f"Session {session_id} created but verification failed: {verify_response.data}"},
+                    data={"error": f"Session {session_id} created but not available after 10s"},
                     elapsed_ms=0,
                 )
 

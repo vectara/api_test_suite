@@ -9,12 +9,30 @@ as a container (indexing, query, chat) but don't test corpus CRUD itself.
 """
 
 import logging
-import time
 import uuid
 
 import pytest
 
+from utils.waiters import wait_for
+
 logger = logging.getLogger(__name__)
+
+
+def _corpus_is_queryable(client, corpus_key):
+    """Return True once a corpus responds to a get request."""
+    resp = client.get_corpus(corpus_key)
+    return resp.success
+
+
+def _documents_indexed(client, corpus_key, expected_count):
+    """Return the document list once at least *expected_count* docs are present."""
+    resp = client.list_documents(corpus_key, limit=100)
+    if not resp.success:
+        return None
+    docs = resp.data.get("documents", [])
+    if len(docs) >= expected_count:
+        return docs
+    return None
 
 
 @pytest.fixture
@@ -39,8 +57,7 @@ def test_corpus(client, unique_id):
     if not corpus_key:
         pytest.skip(f"Corpus created but no key returned: {response.data}")
 
-    # Give the corpus a moment to become queryable.
-    time.sleep(1)
+    wait_for(lambda: _corpus_is_queryable(client, corpus_key), timeout=10, interval=1, description="corpus to become queryable")
 
     try:
         yield corpus_key
@@ -60,17 +77,17 @@ def seeded_corpus(client, test_corpus):
     docs = [
         {
             "id": f"seed_doc_{uuid.uuid4().hex[:8]}",
-            "text": ("Artificial intelligence is transforming industries by enabling " "machines to learn from data and make decisions."),
+            "text": "Artificial intelligence is transforming industries by enabling machines to learn from data and make decisions.",
             "metadata": {"topic": "ai", "source": "seed"},
         },
         {
             "id": f"seed_doc_{uuid.uuid4().hex[:8]}",
-            "text": ("Vector databases store high-dimensional embeddings and support " "fast similarity search for semantic retrieval."),
+            "text": "Vector databases store high-dimensional embeddings and support fast similarity search for semantic retrieval.",
             "metadata": {"topic": "databases", "source": "seed"},
         },
         {
             "id": f"seed_doc_{uuid.uuid4().hex[:8]}",
-            "text": ("Cloud computing provides scalable infrastructure that allows " "organizations to deploy applications globally."),
+            "text": "Cloud computing provides scalable infrastructure that allows organizations to deploy applications globally.",
             "metadata": {"topic": "cloud", "source": "seed"},
         },
     ]
@@ -87,8 +104,7 @@ def seeded_corpus(client, test_corpus):
         else:
             logger.warning("Failed to seed document %s: %s", doc["id"], resp.data)
 
-    # Allow indexing to propagate.
-    time.sleep(2)
+    wait_for(lambda: _documents_indexed(client, test_corpus, len(doc_ids)), timeout=15, interval=1, description="seeded documents to be indexed")
 
     try:
         yield test_corpus
@@ -122,7 +138,7 @@ def shared_corpus(client):
 
     actual_key = response.data.get("key", corpus_key)
 
-    time.sleep(1)
+    wait_for(lambda: _corpus_is_queryable(client, actual_key), timeout=10, interval=1, description="shared corpus to become queryable")
 
     yield actual_key
 
@@ -177,12 +193,7 @@ def seeded_shared_corpus(client, shared_corpus):
         if resp.success:
             doc_ids.append(doc["id"])
 
-    time.sleep(2)  # Allow indexing
+    wait_for(lambda: _documents_indexed(client, shared_corpus, len(doc_ids)), timeout=15, interval=1, description="shared corpus documents to be indexed")
 
+    # Corpus deletion by shared_corpus fixture handles full cleanup.
     yield shared_corpus
-
-    for doc_id in doc_ids:
-        try:
-            client.delete_document(shared_corpus, doc_id)
-        except Exception:
-            pass

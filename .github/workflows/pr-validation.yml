@@ -30,4 +30,6 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Collect tests and validate markers
+        env:
+          VECTARA_API_KEY: dummy-for-collection-only
         run: pytest tests/services/ --collect-only -q

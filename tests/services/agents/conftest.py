@@ -7,10 +7,11 @@ agents per-test since they mutate agent state.
 """
 
 import logging
-import time
 import uuid
 
 import pytest
+
+from utils.waiters import wait_for
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,12 @@ def shared_agent_corpus(client):
         if resp.success:
             doc_ids.append(doc["id"])
 
-    time.sleep(2)
+    wait_for(
+        lambda: client.list_documents(actual_key, limit=1).data.get("documents", []),
+        timeout=15,
+        interval=1,
+        description="agent corpus documents to be indexed",
+    )
 
     yield actual_key
 
