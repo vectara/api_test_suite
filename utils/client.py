@@ -364,6 +364,79 @@ class VectaraClient:
         """Delete a document from a corpus."""
         return self.delete(f"/v2/corpora/{corpus_key}/documents/{document_id}")
 
+    def update_document_metadata(
+        self,
+        corpus_key: str,
+        document_id: str,
+        metadata: dict,
+    ) -> APIResponse:
+        """Update (merge) metadata on an existing document.
+
+        Args:
+            corpus_key: Target corpus key.
+            document_id: Document to update.
+            metadata: Metadata fields to merge into the document.
+
+        Returns:
+            APIResponse with the update result.
+        """
+        return self.patch(
+            f"/v2/corpora/{corpus_key}/documents/{document_id}",
+            data={"metadata": metadata},
+        )
+
+    def replace_document_metadata(
+        self,
+        corpus_key: str,
+        document_id: str,
+        metadata: dict,
+    ) -> APIResponse:
+        """Fully replace metadata on an existing document.
+
+        Args:
+            corpus_key: Target corpus key.
+            document_id: Document whose metadata will be replaced.
+            metadata: Complete metadata dict that replaces the current one.
+
+        Returns:
+            APIResponse with the replacement result.
+        """
+        return self.put(
+            f"/v2/corpora/{corpus_key}/documents/{document_id}/metadata",
+            data={"metadata": metadata},
+        )
+
+    def index_document_parts(
+        self,
+        corpus_key: str,
+        document_id: str,
+        parts: list[dict],
+        metadata: Optional[dict] = None,
+        **kwargs,
+    ) -> APIResponse:
+        """Index a document with explicit parts into a corpus.
+
+        Each part is a dict that must contain ``text`` and may optionally
+        include ``metadata``, ``custom_dimensions``, and ``context``.
+
+        Args:
+            corpus_key: Target corpus key.
+            document_id: Unique document identifier.
+            parts: List of document part dicts.
+            metadata: Optional document-level metadata.
+
+        Returns:
+            APIResponse with the indexing result.
+        """
+        data = {
+            "id": document_id,
+            "type": "core",
+            "metadata": metadata or {},
+            "document_parts": parts,
+            **kwargs,
+        }
+        return self.post(f"/v2/corpora/{corpus_key}/documents", data=data)
+
     # -------------------------------------------------------------------------
     # Vectara API Operations - Query (Search)
     # -------------------------------------------------------------------------
@@ -387,6 +460,39 @@ class VectaraClient:
             **kwargs,
         }
         return self.post("/v2/query", data=data)
+
+    def query_corpus(
+        self,
+        corpus_key: str,
+        query_text: str,
+        limit: int = 10,
+        custom_dimensions: Optional[dict] = None,
+        **kwargs,
+    ) -> APIResponse:
+        """Execute a query scoped to a single corpus via its dedicated endpoint.
+
+        Unlike :meth:`query` which uses the global ``/v2/query`` endpoint,
+        this hits ``/v2/corpora/{corpus_key}/query`` directly.
+
+        Args:
+            corpus_key: The corpus to query.
+            query_text: The query text.
+            limit: Maximum number of search results.
+            custom_dimensions: Optional custom dimension weights for the search.
+
+        Returns:
+            APIResponse with search results.
+        """
+        search: dict = {"limit": limit}
+        if custom_dimensions is not None:
+            search["custom_dimensions"] = custom_dimensions
+
+        data: dict = {
+            "query": query_text,
+            "search": search,
+            **kwargs,
+        }
+        return self.post(f"/v2/corpora/{corpus_key}/query", data=data)
 
     def query_with_summary(
         self,
@@ -646,6 +752,7 @@ class VectaraClient:
         corpus_key: str,
         file_path: str,
         metadata: Optional[dict] = None,
+        table_extraction_config: Optional[dict] = None,
     ) -> APIResponse:
         """Upload a file to a corpus via multipart form-data.
 
@@ -653,6 +760,7 @@ class VectaraClient:
             corpus_key: Target corpus key.
             file_path: Local filesystem path to the file to upload.
             metadata: Optional metadata dict to attach to the document.
+            table_extraction_config: Optional table-extraction configuration dict.
 
         Returns:
             :class:`APIResponse` with the upload result.
@@ -666,15 +774,18 @@ class VectaraClient:
 
         try:
             with open(path, "rb") as fh:
-                files = {"file": (path.name, fh)}
-                form_data: dict = {}
+                import mimetypes
+
+                mime_type = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
+                files: dict = {"file": (path.name, fh, mime_type)}
                 if metadata is not None:
-                    form_data["metadata"] = _json.dumps(metadata)
+                    files["metadata"] = (None, _json.dumps(metadata), "application/json")
+                if table_extraction_config is not None:
+                    files["table_extraction_config"] = (None, _json.dumps(table_extraction_config), "application/json")
 
                 raw = self._request_raw(
                     method="POST",
                     endpoint=endpoint,
-                    data=form_data if form_data else None,
                     files=files,
                 )
 
