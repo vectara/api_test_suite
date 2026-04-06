@@ -586,6 +586,41 @@ class VectaraClient:
         """List all API keys."""
         return self.get("/v2/api_keys")
 
+    def create_api_key(
+        self,
+        name: str,
+        api_key_role: str = "serving",
+        corpus_keys: Optional[list[str]] = None,
+        **kwargs,
+    ) -> APIResponse:
+        """Create a new API key.
+
+        Args:
+            name: Display name for the key.
+            api_key_role: Role for the key (``serving`` or ``personal``).
+            corpus_keys: Optional list of corpus keys to scope the key to.
+        """
+        data: dict = {
+            "name": name,
+            "api_key_role": api_key_role,
+            **kwargs,
+        }
+        if corpus_keys is not None:
+            data["corpus_keys"] = corpus_keys
+        return self.post("/v2/api_keys", data=data)
+
+    def delete_api_key(self, api_key_id: str) -> APIResponse:
+        """Delete an API key by ID."""
+        return self.delete(f"/v2/api_keys/{api_key_id}")
+
+    def enable_api_key(self, api_key_id: str) -> APIResponse:
+        """Enable a disabled API key."""
+        return self.patch(f"/v2/api_keys/{api_key_id}", data={"enabled": True})
+
+    def disable_api_key(self, api_key_id: str) -> APIResponse:
+        """Disable an API key."""
+        return self.patch(f"/v2/api_keys/{api_key_id}", data={"enabled": False})
+
     # -------------------------------------------------------------------------
     # Vectara API Operations - Jobs
     # -------------------------------------------------------------------------
@@ -854,6 +889,136 @@ class VectaraClient:
             APIResponse with the updated identity.
         """
         return self.patch(f"/v2/agents/{agent_key}/identity", data=kwargs)
+
+    # -------------------------------------------------------------------------
+    # Vectara API Operations - LLMs
+    # -------------------------------------------------------------------------
+
+    def list_llms(self, limit: int = 100) -> APIResponse:
+        """List all LLMs configured for the account."""
+        return self.get("/v2/llms", params={"limit": limit})
+
+    def create_llm(
+        self,
+        name: str,
+        model: str,
+        uri: str,
+        bearer_token: Optional[str] = None,
+        llm_type: str = "openai-compatible",
+        **kwargs,
+    ) -> APIResponse:
+        """Create a custom LLM configuration.
+
+        Args:
+            name: Display name for the LLM.
+            model: Model identifier (e.g. ``gpt-4o-mini``).
+            uri: Endpoint URI for the LLM API.
+            bearer_token: Optional bearer token for authentication.
+            llm_type: LLM type (default ``openai-compatible``).
+        """
+        data: dict = {
+            "type": llm_type,
+            "name": name,
+            "model": model,
+            "uri": uri,
+            **kwargs,
+        }
+        if bearer_token is not None:
+            data["auth"] = {"type": "bearer", "token": bearer_token}
+        return self.post("/v2/llms", data=data)
+
+    def delete_llm(self, llm_id: str) -> APIResponse:
+        """Delete a custom LLM by ID."""
+        return self.delete(f"/v2/llms/{llm_id}")
+
+    # -------------------------------------------------------------------------
+    # Vectara API Operations - Tools
+    # -------------------------------------------------------------------------
+
+    def list_tools(self, limit: int = 100) -> APIResponse:
+        """List all tools configured for the account."""
+        return self.get("/v2/tools", params={"limit": limit})
+
+    def create_tool(
+        self,
+        name: str,
+        title: str,
+        description: str,
+        code: str,
+        execution_time: int = 30,
+        max_memory: int = 128,
+        **kwargs,
+    ) -> APIResponse:
+        """Create a lambda tool.
+
+        Args:
+            name: Unique tool name (letters, numbers, hyphens, underscores).
+            title: Human-readable title.
+            description: Tool description.
+            code: Python function code.
+            execution_time: Maximum execution time in seconds.
+            max_memory: Maximum memory in MB.
+        """
+        data: dict = {
+            "type": "lambda",
+            "name": name,
+            "title": title,
+            "description": description,
+            "code": code,
+            "execution_configuration": {
+                "max_execution_time_seconds": execution_time,
+            },
+            **kwargs,
+        }
+        return self.post("/v2/tools", data=data)
+
+    def update_tool(self, tool_id: str, **kwargs) -> APIResponse:
+        """Update tool properties."""
+        return self.patch(f"/v2/tools/{tool_id}", data=kwargs)
+
+    def delete_tool(self, tool_id: str) -> APIResponse:
+        """Delete a tool by ID."""
+        return self.delete(f"/v2/tools/{tool_id}")
+
+    # -------------------------------------------------------------------------
+    # Vectara API Operations - Pipelines
+    # -------------------------------------------------------------------------
+
+    def list_pipelines(self, limit: int = 100) -> APIResponse:
+        """List all pipelines."""
+        return self.get("/v2/pipelines", params={"limit": limit})
+
+    def create_pipeline(
+        self,
+        name: str,
+        key: str,
+        source: dict,
+        trigger: dict,
+        transform: dict,
+        **kwargs,
+    ) -> APIResponse:
+        """Create a new pipeline.
+
+        Args:
+            name: Pipeline display name.
+            key: Unique pipeline key.
+            source: Source configuration dict.
+            trigger: Trigger configuration dict.
+            transform: Transform configuration dict.
+        """
+        data: dict = {
+            "name": name,
+            "key": key,
+            "source": source,
+            "trigger": trigger,
+            "transform": transform,
+            **kwargs,
+        }
+        return self.post("/v2/pipelines", data=data)
+
+    def delete_pipeline(self, pipeline_key: str) -> APIResponse:
+        """Delete a pipeline by key."""
+        return self.delete(f"/v2/pipelines/{pipeline_key}")
 
     # -------------------------------------------------------------------------
     # File Upload
