@@ -40,6 +40,11 @@ class TestAgentExecutionStreaming:
         has_output = any("output" in et or "message" in et for et in event_types if et)
         assert has_output, f"No output event found. Event types: {event_types}"
 
+        output_events = [e for e in events if "output" in e.get("event", "") or "message" in e.get("event", "")]
+        assert len(output_events) > 0, f"No output events. Event types: {event_types}"
+        # Verify at least one output has non-empty data
+        assert any(e.get("data") for e in output_events), f"All output events have empty data: {output_events}"
+
         try:
             client.delete_agent_session(shared_agent, session_key)
         except Exception:

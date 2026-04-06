@@ -72,6 +72,10 @@ class TestAgentConversationFlow:
             )
             assert turn1.success, f"First turn failed: {turn1.data}"
 
+            # Verify response has content
+            turn1_events = turn1.data.get("events", [])
+            assert len(turn1_events) > 0, f"First turn returned no events: {turn1.data.keys()}"
+
             # Step 5: Follow-up (tests context maintenance)
             turn2 = client.execute_agent(
                 agent_id=agent_key,
@@ -79,6 +83,10 @@ class TestAgentConversationFlow:
                 session_id=session_key,
             )
             assert turn2.success, f"Follow-up failed: {turn2.data}"
+
+            # Verify second turn has content
+            turn2_events = turn2.data.get("events", [])
+            assert len(turn2_events) > 0, f"Second turn returned no events: {turn2.data.keys()}"
 
             # Step 6: Verify events exist
             events_resp = client.list_session_events(agent_key, session_key)

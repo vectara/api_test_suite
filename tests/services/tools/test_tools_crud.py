@@ -12,6 +12,7 @@ class TestToolsList:
     def test_list_tools(self, client):
         response = client.list_tools(limit=10)
         assert response.success, f"List tools failed: {response.status_code} - {response.data}"
+        assert "tools" in response.data, f"Expected 'tools' key: {response.data.keys()}"
 
 
 @pytest.mark.core
@@ -24,14 +25,18 @@ class TestToolsCrud:
             description="A test lambda tool",
             code="def process(value: str) -> dict:\n    return {'result': value}",
         )
-        if not response.success:
-            pytest.skip(f"Could not create tool: {response.data}")
+        assert response.success, f"Create tool failed: {response.status_code} - {response.data}"
 
         tool_id = response.data.get("id")
+        assert tool_id, f"No tool ID in response: {response.data}"
 
         # Update
         update_resp = client.update_tool(tool_id, type="lambda", description="Updated description")
         assert update_resp.success, f"Update tool failed: {update_resp.data}"
+
+        # Verify update took effect
+        updated_desc = update_resp.data.get("description", "")
+        assert updated_desc == "Updated description", f"Description not updated: {updated_desc}"
 
         # Delete
         del_resp = client.delete_tool(tool_id)

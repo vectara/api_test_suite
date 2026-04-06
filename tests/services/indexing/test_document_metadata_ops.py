@@ -33,6 +33,12 @@ class TestDocumentMetadataOps:
         )
         assert response.success, f"Multipart index failed: {response.status_code} - {response.data}"
 
+        # Verify document was indexed with correct metadata
+        get_resp = client.get_document(shared_corpus, doc_id)
+        assert get_resp.success, f"Get indexed doc failed: {get_resp.data}"
+        doc_metadata = get_resp.data.get("metadata", {})
+        assert doc_metadata.get("title") == "AI Overview", f"Expected title 'AI Overview', got: {doc_metadata}"
+
         # Cleanup
         try:
             client.delete_document(shared_corpus, doc_id)
@@ -57,6 +63,16 @@ class TestDocumentMetadataOps:
             metadata={"new_key": "new_value"},
         )
         assert response.success, f"PATCH metadata failed: {response.status_code} - {response.data}"
+
+        # Verify PATCH response contains the new key
+        patched = response.data.get("metadata", response.data)
+        assert "new_key" in str(patched), f"New key not in PATCH response: {patched}"
+
+        # Verify via GET that new key is persisted
+        get_resp = client.get_document(shared_corpus, doc_id)
+        assert get_resp.success, f"Get doc after PATCH failed: {get_resp.data}"
+        doc_metadata = get_resp.data.get("metadata", {})
+        assert doc_metadata.get("new_key") == "new_value", f"New key not persisted after PATCH: {doc_metadata}"
 
         # Cleanup
         try:
@@ -84,11 +100,13 @@ class TestDocumentMetadataOps:
         )
         assert response.success, f"PUT metadata failed: {response.status_code} - {response.data}"
 
-        # Verify: GET doc and check metadata matches exactly
+        # Verify: PUT replaces entirely — old keys removed, new keys present
         get_response = client.get_document(shared_corpus, doc_id)
-        if get_response.success:
-            doc_metadata = get_response.data.get("metadata", {})
-            assert doc_metadata.get("title") == "Replaced", f"Title not replaced: {doc_metadata}"
+        assert get_response.success, f"Get doc after PUT failed: {get_response.data}"
+        doc_metadata = get_response.data.get("metadata", {})
+        assert doc_metadata.get("title") == "Replaced", f"Title not replaced: {doc_metadata}"
+        assert doc_metadata.get("lang") == "fr", f"Lang not updated: {doc_metadata}"
+        assert "extra" not in doc_metadata, f"Old 'extra' key should be removed after PUT: {doc_metadata}"
 
         # Cleanup
         try:

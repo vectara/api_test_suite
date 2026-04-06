@@ -29,6 +29,8 @@ class TestApiKeyLifecycle:
         # Verify in list
         list_resp = client.list_api_keys()
         assert list_resp.success
+        key_ids = [k.get("id") for k in list_resp.data.get("api_keys", [])]
+        assert key_id in key_ids, f"Created key {key_id} not found in list: {key_ids}"
 
         # Delete
         del_resp = client.delete_api_key(key_id)
@@ -51,9 +53,23 @@ class TestApiKeyLifecycle:
             disable_resp = client.disable_api_key(key_id)
             assert disable_resp.success, f"Disable failed: {disable_resp.data}"
 
+            # Verify disabled state
+            list_resp = client.list_api_keys()
+            assert list_resp.success
+            disabled_key = next((k for k in list_resp.data.get("api_keys", []) if k.get("id") == key_id), None)
+            assert disabled_key is not None, f"Key {key_id} not found in list"
+            assert disabled_key.get("enabled") is False, f"Key should be disabled: {disabled_key}"
+
             # Enable
             enable_resp = client.enable_api_key(key_id)
             assert enable_resp.success, f"Enable failed: {enable_resp.data}"
+
+            # Verify enabled state
+            list_resp2 = client.list_api_keys()
+            assert list_resp2.success
+            enabled_key = next((k for k in list_resp2.data.get("api_keys", []) if k.get("id") == key_id), None)
+            assert enabled_key is not None, f"Key {key_id} not found after enable"
+            assert enabled_key.get("enabled") is True, f"Key should be enabled: {enabled_key}"
         finally:
             try:
                 client.delete_api_key(key_id)

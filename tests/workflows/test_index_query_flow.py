@@ -66,6 +66,12 @@ class TestIndexQueryFlow:
             results = query_resp.data.get("search_results", query_resp.data.get("results", []))
             assert len(results) > 0, "Expected at least one search result"
 
+            # Verify top result relates to indexed content
+            top_text = results[0].get("text", "").lower()
+            assert any(term in top_text for term in ["learn", "data", "machine", "neural", "language"]), (
+                f"Top result doesn't relate to indexed docs: {top_text[:200]}"
+            )
+
             # Step 5: RAG summary
             summary_resp = client.query_with_summary(
                 corpus_key=actual_key,
@@ -75,6 +81,11 @@ class TestIndexQueryFlow:
             assert summary_resp.success, f"Summary query failed: {summary_resp.data}"
             has_summary = "summary" in summary_resp.data or "generation" in summary_resp.data
             assert has_summary, f"Expected summary in response: {list(summary_resp.data.keys())}"
+
+            summary_text = summary_resp.data.get("summary", summary_resp.data.get("generation", ""))
+            if isinstance(summary_text, dict):
+                summary_text = summary_text.get("text", str(summary_text))
+            assert len(str(summary_text)) > 10, f"Summary too short or empty: {summary_text}"
 
         finally:
             # Cleanup in reverse order

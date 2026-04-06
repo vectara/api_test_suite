@@ -19,3 +19,4 @@ class TestPipelineCrud:
     def test_list_pipelines(self, client):
         response = client.list_pipelines(limit=10)
         assert response.success, f"List pipelines failed: {response.status_code} - {response.data}"
+        assert "pipelines" in response.data, f"Expected 'pipelines' key: {response.data.keys()}"

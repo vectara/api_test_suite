@@ -46,6 +46,11 @@ class TestSessionFork:
         forked_ids = {e.get("id") for e in forked_events}
         assert source_ids.isdisjoint(forked_ids), "Forked events should have new IDs"
 
+        # Event types should match between source and fork
+        source_types = [e.get("type") for e in source_events]
+        forked_types = [e.get("type") for e in forked_events]
+        assert source_types == forked_types, f"Event types mismatch: source={source_types}, forked={forked_types}"
+
         try:
             client.delete_agent_session(shared_agent, forked_key)
             client.delete_agent_session(shared_agent, session_key)

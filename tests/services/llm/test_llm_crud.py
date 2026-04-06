@@ -14,6 +14,7 @@ class TestLlmList:
     def test_list_llms(self, client):
         response = client.list_llms(limit=10)
         assert response.success, f"List LLMs failed: {response.status_code} - {response.data}"
+        assert "llms" in response.data, f"Expected 'llms' key in response: {response.data.keys()}"
 
 
 @pytest.mark.regression
@@ -34,6 +35,9 @@ class TestLlmCrud:
         assert response.success, f"Create LLM failed: {response.status_code} - {response.data}"
 
         llm_id = response.data.get("id")
+        assert llm_id, f"No LLM ID in create response: {response.data}"
+        assert response.data.get("name") == f"test_llm_{unique_id}", f"LLM name mismatch: {response.data}"
+
         if llm_id:
             del_resp = client.delete_llm(llm_id)
             assert del_resp.success, f"Delete LLM failed: {del_resp.data}"

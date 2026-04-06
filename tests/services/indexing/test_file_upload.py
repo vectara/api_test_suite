@@ -36,6 +36,16 @@ class TestFileUpload:
                 metadata={"source": "test_upload", "doc_id": unique_id},
             )
             assert response.success, f"File upload failed: {response.status_code} - {response.data}"
+
+            # Verify document appears in corpus
+            doc_id = response.data.get("id")
+            assert doc_id, f"No document ID in upload response: {response.data}"
+
+            wait_for(
+                lambda: client.get_document(shared_corpus, doc_id).success,
+                timeout=15, interval=1,
+                description="uploaded file to appear as document",
+            )
         finally:
             os.unlink(temp_path)
 
@@ -94,9 +104,25 @@ class TestFileUpload:
                     description="uploaded PDF to be processed",
                 )
 
+                # Load expected table structure
+                with open(expected_path) as f:
+                    import json
+                    expected = json.load(f)
+
                 # Retrieve and validate
                 doc_response = client.get_document(actual_key, doc_id)
                 assert doc_response.success, f"Get doc failed: {doc_response.status_code}"
+
+                # Verify tables were extracted
+                tables = doc_response.data.get("tables", [])
+                if tables:
+                    # Validate table structure matches expected
+                    assert len(tables) > 0, "Expected at least one extracted table"
+                    first_table = tables[0]
+                    assert "data" in first_table, f"Table missing 'data' field: {first_table.keys()}"
+                    table_data = first_table["data"]
+                    assert "headers" in table_data, f"Table data missing 'headers'"
+                    assert "rows" in table_data, f"Table data missing 'rows'"
 
         finally:
             try:

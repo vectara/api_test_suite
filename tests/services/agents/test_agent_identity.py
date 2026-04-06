@@ -18,6 +18,8 @@ class TestAgentIdentity:
         resp = client.get_agent_identity(shared_agent)
         # Some agents may not have identity configured -- just verify the endpoint works
         assert resp.status_code in [200, 404], f"Unexpected status: {resp.status_code} - {resp.data}"
+        if resp.status_code == 200:
+            assert "mode" in resp.data, f"Identity response missing 'mode' field: {resp.data}"
 
     def test_update_agent_identity_mode(self, client, shared_agent_corpus, unique_id):
         """Update agent identity mode from AUTO to MANUAL and back."""
