@@ -673,9 +673,30 @@ class VectaraClient:
         """Update agent properties."""
         return self.patch(f"/v2/agents/{agent_id}", data=kwargs)
 
-    def create_agent_session(self, agent_key: str) -> APIResponse:
-        """Create a new session for an agent."""
-        return self.post(f"/v2/agents/{agent_key}/sessions", data={})
+    def create_agent_session(
+        self,
+        agent_key: str,
+        metadata: Optional[dict] = None,
+        from_session: Optional[dict] = None,
+    ) -> APIResponse:
+        """Create a new session for an agent.
+
+        Args:
+            agent_key: The agent's unique key.
+            metadata: Optional metadata dict to attach to the session.
+            from_session: Optional dict to fork from an existing session.
+                Must contain ``session_key`` and may optionally include
+                ``include_up_to_event_id`` and/or ``compact_up_to_event_id``.
+
+        Returns:
+            APIResponse with the created session details.
+        """
+        data: dict = {}
+        if metadata is not None:
+            data["metadata"] = metadata
+        if from_session is not None:
+            data["from_session"] = from_session
+        return self.post(f"/v2/agents/{agent_key}/sessions", data=data)
 
     def execute_agent(
         self,
@@ -742,6 +763,97 @@ class VectaraClient:
     def delete_agent_session(self, agent_id: str, session_id: str) -> APIResponse:
         """Delete an agent session."""
         return self.delete(f"/v2/agents/{agent_id}/sessions/{session_id}")
+
+    def list_session_events(
+        self,
+        agent_key: str,
+        session_key: str,
+        limit: int = 100,
+        include_hidden: bool = False,
+    ) -> APIResponse:
+        """List events in an agent session.
+
+        Args:
+            agent_key: The agent's unique key.
+            session_key: The session's unique key.
+            limit: Maximum number of events to return.
+            include_hidden: If True, include hidden events in results.
+
+        Returns:
+            APIResponse with the list of session events.
+        """
+        params: dict = {"limit": limit}
+        if include_hidden:
+            params["include_hidden"] = True
+        return self.get(
+            f"/v2/agents/{agent_key}/sessions/{session_key}/events",
+            params=params,
+        )
+
+    def hide_event(
+        self,
+        agent_key: str,
+        session_key: str,
+        event_id: str,
+    ) -> APIResponse:
+        """Hide an event in an agent session.
+
+        Args:
+            agent_key: The agent's unique key.
+            session_key: The session's unique key.
+            event_id: The event to hide.
+
+        Returns:
+            APIResponse with the hide result.
+        """
+        return self.post(
+            f"/v2/agents/{agent_key}/sessions/{session_key}/events/{event_id}/hide",
+            data={},
+        )
+
+    def unhide_event(
+        self,
+        agent_key: str,
+        session_key: str,
+        event_id: str,
+    ) -> APIResponse:
+        """Unhide an event in an agent session.
+
+        Args:
+            agent_key: The agent's unique key.
+            session_key: The session's unique key.
+            event_id: The event to unhide.
+
+        Returns:
+            APIResponse with the unhide result.
+        """
+        return self.post(
+            f"/v2/agents/{agent_key}/sessions/{session_key}/events/{event_id}/unhide",
+            data={},
+        )
+
+    def get_agent_identity(self, agent_key: str) -> APIResponse:
+        """Get the identity configuration of an agent.
+
+        Args:
+            agent_key: The agent's unique key.
+
+        Returns:
+            APIResponse with the agent identity details.
+        """
+        return self.get(f"/v2/agents/{agent_key}/identity")
+
+    def update_agent_identity(self, agent_key: str, **kwargs) -> APIResponse:
+        """Update the identity configuration of an agent.
+
+        Args:
+            agent_key: The agent's unique key.
+            **kwargs: Identity fields to update.
+
+        Returns:
+            APIResponse with the updated identity.
+        """
+        return self.patch(f"/v2/agents/{agent_key}/identity", data=kwargs)
 
     # -------------------------------------------------------------------------
     # File Upload
