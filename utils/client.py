@@ -870,6 +870,7 @@ class VectaraClient:
         description: str = "",
         model_name: Optional[str] = None,
         agent_key: Optional[str] = None,
+        tool_configurations: Optional[dict] = None,
         **kwargs,
     ) -> APIResponse:
         """Create a new agent for conversational AI.
@@ -880,6 +881,7 @@ class VectaraClient:
             description: Agent description
             model_name: LLM model name (uses instance llm_name or defaults to gpt-4o)
             agent_key: Unique key for the agent (auto-generated if not provided)
+            tool_configurations: Optional list of tool config dicts (e.g. corpora_search, web_search)
         """
         import uuid
 
@@ -912,9 +914,8 @@ class VectaraClient:
             **kwargs,
         }
 
-        # Note: corpus_keys parameter is accepted but not used in agent creation
-        # Corpus association for agents is handled through tool configuration
-        # which requires additional setup. Basic agents work without it.
+        if tool_configurations is not None:
+            data["tool_configurations"] = tool_configurations
 
         return self.post("/v2/agents", data=data)
 
@@ -1294,6 +1295,40 @@ class VectaraClient:
     def list_rerankers(self, limit: int = 100) -> APIResponse:
         """List rerankers available for the account."""
         return self.get("/v2/rerankers", params={"limit": limit})
+
+    # -------------------------------------------------------------------------
+    # Vectara API Operations - Guardrails
+    # -------------------------------------------------------------------------
+
+    def list_guardrails(self, limit: int = 100) -> APIResponse:
+        """List available guardrails."""
+        return self.get("/v2/guardrails", params={"limit": limit})
+
+    # -------------------------------------------------------------------------
+    # Vectara API Operations - Query History
+    # -------------------------------------------------------------------------
+
+    def list_query_histories(
+        self,
+        limit: int = 100,
+        corpus_key: Optional[str] = None,
+        **kwargs,
+    ) -> APIResponse:
+        """List query histories.
+
+        Args:
+            limit: Maximum number of results.
+            corpus_key: Optional corpus key to filter by.
+            **kwargs: Additional query params (chat_id, page_key).
+        """
+        params: dict = {"limit": limit, **kwargs}
+        if corpus_key is not None:
+            params["corpus_key"] = corpus_key
+        return self.get("/v2/queries", params=params)
+
+    def get_query_history(self, query_id: str) -> APIResponse:
+        """Get a specific query history entry."""
+        return self.get(f"/v2/queries/{query_id}")
 
     # -------------------------------------------------------------------------
     # File Upload
