@@ -35,15 +35,19 @@ class TestUserCrud:
     """User management CRUD operations."""
 
     def test_create_user(self, client, unique_id):
-        """Test creating a new user."""
+        """Test creating a new user and verifying response contains the sent fields."""
         email = f"test_{unique_id}@example.com"
-        resp = client.create_user(email=email, description=f"Test user {unique_id}")
+        description = f"Test user {unique_id}"
+        resp = client.create_user(email=email, description=description)
 
         try:
             assert resp.success, f"Create user failed: {resp.status_code} - {resp.data}"
-            username = _extract_username(resp, email)
-            assert username is not None, \
-                f"Response should contain username, id, or email, got: {resp.data}"
+            assert resp.data.get("id") is not None, f"Response should contain 'id': {resp.data}"
+
+            assert resp.data.get("email") == email, \
+                f"Create response should echo back email: expected {email!r}, got {resp.data.get('email')!r}"
+            assert resp.data.get("description") == description, \
+                f"Create response should echo back description: expected {description!r}, got {resp.data.get('description')!r}"
         finally:
             username = _extract_username(resp, email) if resp.success else None
             if username:
