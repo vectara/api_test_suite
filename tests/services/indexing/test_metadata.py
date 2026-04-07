@@ -33,6 +33,19 @@ class TestDocumentMetadata:
 
         assert response.success, f"Document with metadata indexing failed: {response.status_code} - {response.data}"
 
+        from utils.waiters import wait_for
+
+        wait_for(
+            lambda: client.get_document(shared_corpus, doc_id).success,
+            timeout=15,
+            interval=1,
+            description="document to be available",
+        )
+        get_resp = client.get_document(shared_corpus, doc_id)
+        assert get_resp.success, f"GET document failed: {get_resp.status_code}"
+        assert get_resp.data.get("id") == doc_id, \
+            f"Document id mismatch: expected {doc_id}, got {get_resp.data.get('id')}"
+
     def test_index_document_special_characters(self, client, shared_corpus, unique_id):
         """Test indexing document with special characters."""
         doc_id = f"special_doc_{unique_id}"
@@ -53,6 +66,8 @@ class TestDocumentMetadata:
         )
 
         assert response.success, f"Special characters document indexing failed: {response.status_code} - {response.data}"
+        assert response.data.get("id") is not None, \
+            f"Index response should contain document id, got: {response.data}"
 
     def test_indexing_response_time(self, client, shared_corpus, unique_id):
         """Test that indexing completes in acceptable time."""

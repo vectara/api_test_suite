@@ -20,6 +20,9 @@ class TestApiKeyValidation:
         response = client.health_check()
 
         assert response.success, f"API authentication failed: {response.status_code} - {response.data}"
+        assert response.data is not None, "Health check returned no data"
+        assert "corpora" in response.data or isinstance(response.data, list), \
+            f"Expected corpora structure, got: {type(response.data)}"
 
     def test_invalid_api_key_rejected(self, config):
         """Test that invalid API keys are properly rejected."""

@@ -20,6 +20,8 @@ class TestAgentExecution:
         )
 
         assert response.success, f"Agent execution failed: {response.status_code} - {response.data}"
+        events = response.data.get("events", [])
+        assert len(events) > 0, f"Expected events in agent response, got: {response.data}"
 
     def test_execute_agent_with_context(self, client, shared_agent):
         """Test multi-turn conversation with an agent."""
@@ -30,6 +32,8 @@ class TestAgentExecution:
         )
 
         assert response1.success, f"First turn failed: {response1.status_code} - {response1.data}"
+        events1 = response1.data.get("events", [])
+        assert len(events1) > 0, f"Expected events in turn 1 response, got: {response1.data}"
 
         # Get session ID if available for follow-up
         session_id = response1.data.get("session_id")
@@ -42,6 +46,8 @@ class TestAgentExecution:
         )
 
         assert response2.success, f"Follow-up turn failed: {response2.status_code} - {response2.data}"
+        events2 = response2.data.get("events", [])
+        assert len(events2) > 0, f"Expected events in turn 2 response, got: {response2.data}"
 
     def test_execute_agent_response_time(self, client, shared_agent):
         """Test that agent execution completes in acceptable time."""
@@ -78,6 +84,8 @@ class TestAgentExecutionEdgeCases:
         )
 
         assert response.success, f"Special character query failed: {response.status_code}"
+        events = response.data.get("events", [])
+        assert len(events) > 0, "Expected events for special character query"
 
     def test_agent_handles_long_query(self, client, shared_agent):
         """Test agent handles longer queries."""
@@ -94,3 +102,5 @@ class TestAgentExecutionEdgeCases:
         )
 
         assert response.success, f"Long query failed: {response.status_code}"
+        events = response.data.get("events", [])
+        assert len(events) > 0, "Expected events for long query"

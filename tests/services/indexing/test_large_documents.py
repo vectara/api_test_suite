@@ -36,6 +36,8 @@ class TestLargeDocuments:
         )
 
         assert response.success, f"Large document indexing failed: {response.status_code} - {response.data}"
+        assert response.data.get("id") is not None, \
+            f"Index response should contain document id, got: {response.data}"
 
     def test_index_multiple_documents(self, client, shared_corpus, unique_id):
         """Test indexing multiple documents sequentially."""
@@ -50,6 +52,19 @@ class TestLargeDocuments:
             )
 
             assert response.success, f"Document {i} indexing failed: {response.status_code}"
+
+        def _docs_indexed():
+            list_resp = client.list_documents(shared_corpus, limit=100)
+            if not list_resp.success:
+                return False
+            docs = list_resp.data.get("documents", [])
+            return len(docs) >= len(doc_ids)
+
+        wait_for(_docs_indexed, timeout=30, interval=2, description="all documents to be indexed")
+        list_resp = client.list_documents(shared_corpus, limit=100)
+        listed_ids = [d.get("id") for d in list_resp.data.get("documents", [])]
+        for did in doc_ids:
+            assert did in listed_ids, f"Document {did} not found in listing"
 
     def test_list_documents(self, client, shared_corpus, unique_id):
         """Test listing documents in a corpus."""

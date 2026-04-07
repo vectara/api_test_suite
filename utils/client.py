@@ -318,6 +318,36 @@ class VectaraClient:
         """Update corpus properties."""
         return self.patch(f"/v2/corpora/{corpus_key}", data=kwargs)
 
+    def replace_filter_attributes(
+        self,
+        corpus_key: str,
+        filter_attributes: list[dict],
+    ) -> APIResponse:
+        """Replace the filter attributes of a corpus.
+
+        Args:
+            corpus_key: Target corpus key.
+            filter_attributes: New filter attribute definitions.
+
+        Returns:
+            APIResponse with job_id and status (async operation).
+        """
+        return self.post(
+            f"/v2/corpora/{corpus_key}/replace_filter_attributes",
+            data={"filter_attributes": filter_attributes},
+        )
+
+    def compute_corpus_size(self, corpus_key: str) -> APIResponse:
+        """Compute the current size of a corpus.
+
+        Returns document count, part count, and character statistics.
+        """
+        return self.post(f"/v2/corpora/{corpus_key}/compute_size")
+
+    def reset_corpus(self, corpus_key: str) -> APIResponse:
+        """Remove all documents and data from a corpus."""
+        return self.post(f"/v2/corpora/{corpus_key}/reset")
+
     # -------------------------------------------------------------------------
     # Vectara API Operations - Documents (Indexing)
     # -------------------------------------------------------------------------
@@ -405,6 +435,34 @@ class VectaraClient:
             f"/v2/corpora/{corpus_key}/documents/{document_id}/metadata",
             data={"metadata": metadata},
         )
+
+    def bulk_delete_documents(
+        self,
+        corpus_key: str,
+        document_ids: Optional[list[str]] = None,
+        metadata_filter: Optional[str] = None,
+        async_mode: bool = True,
+    ) -> APIResponse:
+        """Bulk delete documents from a corpus.
+
+        Args:
+            corpus_key: Target corpus key.
+            document_ids: List of document IDs to delete.
+            metadata_filter: SQL-like filter expression for deletion.
+            async_mode: If True (default), returns 202 with job_id.
+                If False, waits for completion and returns 200.
+
+        Returns:
+            APIResponse with deletion result or job_id.
+        """
+        params: dict = {}
+        if document_ids is not None:
+            params["document_ids"] = ",".join(document_ids)
+        if metadata_filter is not None:
+            params["metadata_filter"] = metadata_filter
+        if not async_mode:
+            params["async"] = "false"
+        return self._request("DELETE", f"/v2/corpora/{corpus_key}/documents", params=params)
 
     def index_document_parts(
         self,
@@ -531,6 +589,47 @@ class VectaraClient:
         }
         return self.post("/v2/query", data=data)
 
+    def query_stream(
+        self,
+        corpus_key: str,
+        query_text: str,
+        generation_config: Optional[dict] = None,
+        **kwargs,
+    ) -> requests.Response:
+        """Execute a streaming query and return the raw SSE response.
+
+        Streaming requires ``stream_response: true`` in the request body
+        and ``Accept: text/event-stream`` header.
+
+        Args:
+            corpus_key: The corpus to query.
+            query_text: The query text.
+            generation_config: Optional generation configuration dict.
+
+        Returns:
+            Raw streaming :class:`requests.Response`.
+        """
+        data: dict = {
+            "query": query_text,
+            "search": {
+                "corpora": [{"corpus_key": corpus_key}],
+            },
+            "stream_response": True,
+            **kwargs,
+        }
+        if generation_config is not None:
+            data["generation"] = generation_config
+        elif self.generation_preset or self.llm_name:
+            data["generation"] = self._build_generation_config()
+
+        return self._request_raw(
+            method="POST",
+            endpoint="/v2/query",
+            data=data,
+            headers={"Accept": "text/event-stream"},
+            stream=True,
+        )
+
     # -------------------------------------------------------------------------
     # Vectara API Operations - Chat
     # -------------------------------------------------------------------------
@@ -578,6 +677,22 @@ class VectaraClient:
         }
         return self.post(f"/v2/chats/{chat_id}/turns", data=data)
 
+    def list_chat_turns(self, chat_id: str) -> APIResponse:
+        """List turns in a chat."""
+        return self.get(f"/v2/chats/{chat_id}/turns")
+
+    def get_chat_turn(self, chat_id: str, turn_id: str) -> APIResponse:
+        """Get a specific turn in a chat."""
+        return self.get(f"/v2/chats/{chat_id}/turns/{turn_id}")
+
+    def update_chat_turn(self, chat_id: str, turn_id: str, **kwargs) -> APIResponse:
+        """Update a turn in a chat (e.g., disable it)."""
+        return self.patch(f"/v2/chats/{chat_id}/turns/{turn_id}", data=kwargs)
+
+    def delete_chat_turn(self, chat_id: str, turn_id: str) -> APIResponse:
+        """Delete a turn from a chat."""
+        return self.delete(f"/v2/chats/{chat_id}/turns/{turn_id}")
+
     # -------------------------------------------------------------------------
     # Vectara API Operations - API Keys (Admin)
     # -------------------------------------------------------------------------
@@ -620,6 +735,113 @@ class VectaraClient:
     def disable_api_key(self, api_key_id: str) -> APIResponse:
         """Disable an API key."""
         return self.patch(f"/v2/api_keys/{api_key_id}", data={"enabled": False})
+
+    # -------------------------------------------------------------------------
+    # Vectara API Operations - App Clients
+    # -------------------------------------------------------------------------
+
+    def create_app_client(
+        self,
+        name: str,
+        type: str = "client_credentials",
+        description: str = "",
+        api_roles: Optional[list[dict]] = None,
+        corpus_roles: Optional[list[dict]] = None,
+        agent_roles: Optional[list[dict]] = None,
+        **kwargs,
+    ) -> APIResponse:
+        """Create an app client.
+
+        Args:
+            name: Display name for the app client.
+            type: Client type (default ``client_credentials``).
+            description: Optional description.
+            api_roles: Optional customer-level role assignments.
+            corpus_roles: Optional corpus-specific role assignments.
+            agent_roles: Optional agent-specific role assignments.
+        """
+        data: dict = {"name": name, "type": type, "description": description, **kwargs}
+        if api_roles is not None:
+            data["api_roles"] = api_roles
+        if corpus_roles is not None:
+            data["corpus_roles"] = corpus_roles
+        if agent_roles is not None:
+            data["agent_roles"] = agent_roles
+        return self.post("/v2/app_clients", data=data)
+
+    def list_app_clients(self, limit: int = 100) -> APIResponse:
+        """List all app clients."""
+        return self.get("/v2/app_clients", params={"limit": limit})
+
+    def get_app_client(self, app_client_id: str) -> APIResponse:
+        """Get an app client by ID."""
+        return self.get(f"/v2/app_clients/{app_client_id}")
+
+    def update_app_client(self, app_client_id: str, **kwargs) -> APIResponse:
+        """Update an app client."""
+        return self.patch(f"/v2/app_clients/{app_client_id}", data=kwargs)
+
+    def delete_app_client(self, app_client_id: str) -> APIResponse:
+        """Delete an app client by ID."""
+        return self.delete(f"/v2/app_clients/{app_client_id}")
+
+    # -------------------------------------------------------------------------
+    # Vectara API Operations - Users
+    # -------------------------------------------------------------------------
+
+    def create_user(
+        self,
+        email: str,
+        username: Optional[str] = None,
+        api_roles: Optional[list[dict]] = None,
+        corpus_roles: Optional[list[dict]] = None,
+        agent_roles: Optional[list[dict]] = None,
+        description: str = "",
+        **kwargs,
+    ) -> APIResponse:
+        """Create a user in the current customer account.
+
+        Args:
+            email: User email address (required).
+            username: Username (defaults to email if not provided).
+            api_roles: Optional customer-level role assignments.
+            corpus_roles: Optional corpus-specific role assignments.
+            agent_roles: Optional agent-specific role assignments.
+            description: Optional user description.
+        """
+        data: dict = {"email": email, "description": description, **kwargs}
+        if username is not None:
+            data["username"] = username
+        if api_roles is not None:
+            data["api_roles"] = api_roles
+        if corpus_roles is not None:
+            data["corpus_roles"] = corpus_roles
+        if agent_roles is not None:
+            data["agent_roles"] = agent_roles
+        return self.post("/v2/users", data=data)
+
+    def list_users(self, limit: int = 100) -> APIResponse:
+        """List users in the account."""
+        return self.get("/v2/users", params={"limit": limit})
+
+    def get_user(self, username: str) -> APIResponse:
+        """Get a user by username."""
+        return self.get(f"/v2/users/{username}")
+
+    def update_user(self, username: str, **kwargs) -> APIResponse:
+        """Update a user.
+
+        Supported fields: enabled, api_roles, corpus_roles, agent_roles, description.
+        """
+        return self.patch(f"/v2/users/{username}", data=kwargs)
+
+    def delete_user(self, username: str) -> APIResponse:
+        """Delete a user by username."""
+        return self.delete(f"/v2/users/{username}")
+
+    def reset_user_password(self, username: str) -> APIResponse:
+        """Reset the password for a user."""
+        return self.post(f"/v2/users/{username}/reset_password", data={})
 
     # -------------------------------------------------------------------------
     # Vectara API Operations - Jobs
@@ -798,6 +1020,31 @@ class VectaraClient:
     def delete_agent_session(self, agent_id: str, session_id: str) -> APIResponse:
         """Delete an agent session."""
         return self.delete(f"/v2/agents/{agent_id}/sessions/{session_id}")
+
+    def update_agent_session(self, agent_key: str, session_key: str, **kwargs) -> APIResponse:
+        """Update an agent session.
+
+        Supported fields: name, description, metadata, enabled, tti_minutes.
+        """
+        return self.patch(f"/v2/agents/{agent_key}/sessions/{session_key}", data=kwargs)
+
+    def compact_session(
+        self,
+        agent_key: str,
+        session_key: str,
+        compact_up_to_event_id: Optional[str] = None,
+    ) -> APIResponse:
+        """Send a manual compaction request to a session.
+
+        Args:
+            agent_key: The agent's unique key.
+            session_key: The session's unique key.
+            compact_up_to_event_id: Optional event ID to compact up to.
+        """
+        data: dict = {"type": "compact"}
+        if compact_up_to_event_id is not None:
+            data["compact_up_to_event_id"] = compact_up_to_event_id
+        return self.post(f"/v2/agents/{agent_key}/sessions/{session_key}/events", data=data)
 
     def list_session_events(
         self,
@@ -1020,6 +1267,34 @@ class VectaraClient:
         """Delete a pipeline by key."""
         return self.delete(f"/v2/pipelines/{pipeline_key}")
 
+    def get_pipeline(self, pipeline_key: str) -> APIResponse:
+        """Get a pipeline by key."""
+        return self.get(f"/v2/pipelines/{pipeline_key}")
+
+    def update_pipeline(self, pipeline_key: str, **kwargs) -> APIResponse:
+        """Partially update a pipeline."""
+        return self.patch(f"/v2/pipelines/{pipeline_key}", data=kwargs)
+
+    def replace_pipeline(self, pipeline_key: str, **kwargs) -> APIResponse:
+        """Fully replace a pipeline definition."""
+        return self.put(f"/v2/pipelines/{pipeline_key}", data=kwargs)
+
+    # -------------------------------------------------------------------------
+    # Vectara API Operations - Generation Presets
+    # -------------------------------------------------------------------------
+
+    def list_generation_presets(self, limit: int = 100) -> APIResponse:
+        """List generation presets available for the account."""
+        return self.get("/v2/generation_presets", params={"limit": limit})
+
+    # -------------------------------------------------------------------------
+    # Vectara API Operations - Rerankers
+    # -------------------------------------------------------------------------
+
+    def list_rerankers(self, limit: int = 100) -> APIResponse:
+        """List rerankers available for the account."""
+        return self.get("/v2/rerankers", params={"limit": limit})
+
     # -------------------------------------------------------------------------
     # File Upload
     # -------------------------------------------------------------------------
@@ -1129,7 +1404,6 @@ class VectaraClient:
             method="POST",
             endpoint=endpoint,
             data=data,
-            headers={"Accept": "text/event-stream"},
             stream=True,
         )
 
