@@ -16,8 +16,7 @@ class TestAgentContextPreservation:
     def test_three_turn_context_preservation(self, client, shared_agent):
         """Send 3 turns, verify the 3rd turn retains context from turn 1."""
         session_resp = client.create_agent_session(shared_agent)
-        if not session_resp.success:
-            pytest.skip(f"Could not create session: {session_resp.data}")
+        assert session_resp.success, f"Create session failed: {session_resp.status_code} - {session_resp.data}"
 
         session_key = session_resp.data.get("key")
         try:
@@ -67,8 +66,8 @@ class TestAgentContextPreservation:
         session_a = client.create_agent_session(shared_agent)
         session_b = client.create_agent_session(shared_agent)
 
-        if not session_a.success or not session_b.success:
-            pytest.skip("Could not create both sessions")
+        assert session_a.success, f"Create session A failed: {session_a.status_code} - {session_a.data}"
+        assert session_b.success, f"Create session B failed: {session_b.status_code} - {session_b.data}"
 
         key_a = session_a.data.get("key")
         key_b = session_b.data.get("key")

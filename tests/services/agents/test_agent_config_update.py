@@ -17,11 +17,9 @@ class TestAgentConfigUpdate:
         """Create a temporary agent for testing updates."""
         name = f"Config Test Agent {unique_id}"
         resp = client.create_agent(name=name, description="Agent for config update tests")
-        if not resp.success:
-            pytest.skip(f"Could not create agent: {resp.data}")
+        assert resp.success, f"Create agent failed: {resp.status_code} - {resp.data}"
         agent_id = resp.data.get("id") or resp.data.get("key")
-        if not agent_id:
-            pytest.skip("No agent id in create response")
+        assert agent_id, f"No agent id in create response: {resp.data}"
         return agent_id
 
     def test_update_agent_description(self, client, unique_id):

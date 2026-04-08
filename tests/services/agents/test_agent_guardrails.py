@@ -39,8 +39,7 @@ class TestAgentGuardrails:
                 "max_retries": 2,
             },
         )
-        if not resp.success:
-            pytest.skip(f"Could not create agent with guardrails: {resp.data}")
+        assert resp.success, f"Create agent with guardrails failed: {resp.status_code} - {resp.data}"
 
         try:
             get_resp = client.get_agent(agent_key)

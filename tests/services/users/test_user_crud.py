@@ -60,8 +60,7 @@ class TestUserCrud:
         """Test that a created user appears in the user list."""
         email = f"test_list_{unique_id}@example.com"
         create_resp = client.create_user(email=email)
-        if not create_resp.success:
-            pytest.skip(f"Could not create user: {create_resp.data}")
+        assert create_resp.success, f"Create user failed: {create_resp.status_code} - {create_resp.data}"
 
         username = _extract_username(create_resp, email)
         try:
@@ -83,8 +82,7 @@ class TestUserCrud:
         """Test retrieving a specific user."""
         email = f"test_get_{unique_id}@example.com"
         create_resp = client.create_user(email=email)
-        if not create_resp.success:
-            pytest.skip(f"Could not create user: {create_resp.data}")
+        assert create_resp.success, f"Create user failed: {create_resp.status_code} - {create_resp.data}"
 
         username = _extract_username(create_resp, email)
         try:
@@ -102,8 +100,7 @@ class TestUserCrud:
         """Test updating a user's description."""
         email = f"test_update_{unique_id}@example.com"
         create_resp = client.create_user(email=email, description="Original")
-        if not create_resp.success:
-            pytest.skip(f"Could not create user: {create_resp.data}")
+        assert create_resp.success, f"Create user failed: {create_resp.status_code} - {create_resp.data}"
 
         username = _extract_username(create_resp, email)
         try:
@@ -124,8 +121,7 @@ class TestUserCrud:
         """Test disabling and re-enabling a user."""
         email = f"test_toggle_{unique_id}@example.com"
         create_resp = client.create_user(email=email)
-        if not create_resp.success:
-            pytest.skip(f"Could not create user: {create_resp.data}")
+        assert create_resp.success, f"Create user failed: {create_resp.status_code} - {create_resp.data}"
 
         username = _extract_username(create_resp, email)
         try:
@@ -152,8 +148,7 @@ class TestUserCrud:
         """Test deleting a user and verifying 404."""
         email = f"test_delete_{unique_id}@example.com"
         create_resp = client.create_user(email=email)
-        if not create_resp.success:
-            pytest.skip(f"Could not create user: {create_resp.data}")
+        assert create_resp.success, f"Create user failed: {create_resp.status_code} - {create_resp.data}"
 
         username = _extract_username(create_resp, email)
 

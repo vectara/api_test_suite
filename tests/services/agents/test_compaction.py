@@ -27,8 +27,7 @@ class TestCompactionConfig:
                 "keep_recent_inputs": 2,
             },
         )
-        if not resp.success:
-            pytest.skip(f"Could not create agent with compaction: {resp.data}")
+        assert resp.success, f"Create agent with compaction failed: {resp.status_code} - {resp.data}"
 
         try:
             get_resp = client.get_agent(agent_key)
@@ -50,8 +49,7 @@ class TestCompactionConfig:
             name=f"Compaction Update {unique_id}",
             agent_key=agent_key,
         )
-        if not resp.success:
-            pytest.skip(f"Could not create agent: {resp.data}")
+        assert resp.success, f"Create agent failed: {resp.status_code} - {resp.data}"
 
         try:
             update_resp = client.update_agent(
@@ -78,8 +76,7 @@ class TestManualCompaction:
     def test_manual_compaction_on_session(self, client, shared_agent):
         """manualCompaction_streamingOnIdleSession — send compact to a session with turns."""
         session_resp = client.create_agent_session(shared_agent)
-        if not session_resp.success:
-            pytest.skip(f"Could not create session: {session_resp.data}")
+        assert session_resp.success, f"Create session failed: {session_resp.status_code} - {session_resp.data}"
 
         session_key = session_resp.data.get("key")
         try:
@@ -124,8 +121,7 @@ class TestManualCompaction:
     def test_manual_compaction_not_enough_turns(self, client, shared_agent):
         """manualCompaction_streamingNotEnoughTurns_returnsError — compact empty/single-turn session."""
         session_resp = client.create_agent_session(shared_agent)
-        if not session_resp.success:
-            pytest.skip(f"Could not create session: {session_resp.data}")
+        assert session_resp.success, f"Create session failed: {session_resp.status_code} - {session_resp.data}"
 
         session_key = session_resp.data.get("key")
         try:

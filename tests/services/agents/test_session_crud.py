@@ -52,8 +52,7 @@ class TestSessionCrud:
     def test_get_session(self, client, shared_agent):
         """testGetSession — verify all expected fields present."""
         create_resp = client.create_agent_session(shared_agent)
-        if not create_resp.success:
-            pytest.skip(f"Could not create session: {create_resp.data}")
+        assert create_resp.success, f"Create session failed: {create_resp.status_code} - {create_resp.data}"
 
         session_key = create_resp.data.get("key")
         try:
@@ -77,8 +76,7 @@ class TestSessionCrud:
     def test_delete_session(self, client, shared_agent):
         """testDeleteSession — delete and verify 404."""
         create_resp = client.create_agent_session(shared_agent)
-        if not create_resp.success:
-            pytest.skip(f"Could not create session: {create_resp.data}")
+        assert create_resp.success, f"Create session failed: {create_resp.status_code} - {create_resp.data}"
 
         session_key = create_resp.data.get("key")
         del_resp = client.delete_agent_session(shared_agent, session_key)
@@ -100,8 +98,7 @@ class TestSessionUpdate:
     def test_update_session_description(self, client, shared_agent):
         """testUpdateSessionPartialUpdateDescriptionOnly."""
         create_resp = client.create_agent_session(shared_agent)
-        if not create_resp.success:
-            pytest.skip(f"Could not create session: {create_resp.data}")
+        assert create_resp.success, f"Create session failed: {create_resp.status_code} - {create_resp.data}"
 
         session_key = create_resp.data.get("key")
         try:
@@ -121,8 +118,7 @@ class TestSessionUpdate:
     def test_update_session_name(self, client, shared_agent):
         """testUpdateSessionNameOnly."""
         create_resp = client.create_agent_session(shared_agent)
-        if not create_resp.success:
-            pytest.skip(f"Could not create session: {create_resp.data}")
+        assert create_resp.success, f"Create session failed: {create_resp.status_code} - {create_resp.data}"
 
         session_key = create_resp.data.get("key")
         try:
@@ -141,8 +137,7 @@ class TestSessionUpdate:
     def test_update_session_enabled(self, client, shared_agent):
         """testUpdateSessionEnabledOnly — disable then re-enable."""
         create_resp = client.create_agent_session(shared_agent)
-        if not create_resp.success:
-            pytest.skip(f"Could not create session: {create_resp.data}")
+        assert create_resp.success, f"Create session failed: {create_resp.status_code} - {create_resp.data}"
 
         session_key = create_resp.data.get("key")
         try:
@@ -166,8 +161,7 @@ class TestSessionUpdate:
     def test_update_session_metadata(self, client, shared_agent):
         """testUpdateSessionMetadataOnly."""
         create_resp = client.create_agent_session(shared_agent, metadata={"initial": "value"})
-        if not create_resp.success:
-            pytest.skip(f"Could not create session: {create_resp.data}")
+        assert create_resp.success, f"Create session failed: {create_resp.status_code} - {create_resp.data}"
 
         session_key = create_resp.data.get("key")
         try:
@@ -194,8 +188,7 @@ class TestSessionUpdate:
     def test_update_session_with_special_characters(self, client, shared_agent):
         """testUpdateSessionWithSpecialCharacters — unicode in name/description."""
         create_resp = client.create_agent_session(shared_agent)
-        if not create_resp.success:
-            pytest.skip(f"Could not create session: {create_resp.data}")
+        assert create_resp.success, f"Create session failed: {create_resp.status_code} - {create_resp.data}"
 
         session_key = create_resp.data.get("key")
         try:

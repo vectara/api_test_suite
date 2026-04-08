@@ -13,8 +13,8 @@ import re
 import pytest
 
 
-def _create_chat_or_skip(client, corpus_key):
-    """Create a chat and return (chat_id, turn_id, answer). Skip on failure."""
+def _create_chat(client, corpus_key):
+    """Create a chat and return (chat_id, turn_id, answer). Fail on error."""
     response = client.create_chat(
         corpus_key=corpus_key,
         query_text="Tell me about AI",
@@ -23,15 +23,13 @@ def _create_chat_or_skip(client, corpus_key):
     if not response.success and "rephraser" in str(response.data).lower():
         pytest.skip("Chat rephraser not configured on this instance")
 
-    if not response.success:
-        pytest.skip(f"Could not create chat: {response.status_code} - {response.data}")
+    assert response.success, f"Create chat failed: {response.status_code} - {response.data}"
 
     chat_id = response.data.get("chat_id")
     turn_id = response.data.get("turn_id")
     answer = response.data.get("answer")
 
-    if not chat_id:
-        pytest.skip("No chat_id in create_chat response")
+    assert chat_id, f"No chat_id in create_chat response: {response.data}"
 
     return chat_id, turn_id, answer
 
@@ -42,7 +40,7 @@ class TestChatTurns:
 
     def test_get_single_chat(self, client, seeded_shared_corpus):
         """Create a chat and GET /v2/chats/{id} to verify chat_id is present."""
-        chat_id, _, _ = _create_chat_or_skip(client, seeded_shared_corpus)
+        chat_id, _, _ = _create_chat(client, seeded_shared_corpus)
 
         try:
             response = client.get_chat(chat_id)
@@ -67,7 +65,7 @@ class TestChatTurns:
 
     def test_list_chat_turns(self, client, seeded_shared_corpus):
         """Create a chat, list its turns, and verify at least 1 turn exists."""
-        chat_id, _, _ = _create_chat_or_skip(client, seeded_shared_corpus)
+        chat_id, _, _ = _create_chat(client, seeded_shared_corpus)
 
         try:
             response = client.list_chat_turns(chat_id)
@@ -87,7 +85,7 @@ class TestChatTurns:
 
     def test_get_chat_turn(self, client, seeded_shared_corpus):
         """Create a chat, get the turn by ID, and verify fields."""
-        chat_id, turn_id, _ = _create_chat_or_skip(client, seeded_shared_corpus)
+        chat_id, turn_id, _ = _create_chat(client, seeded_shared_corpus)
 
         if not turn_id:
             pytest.skip("No turn_id in create_chat response")
@@ -110,7 +108,7 @@ class TestChatTurns:
 
     def test_update_chat_turn(self, client, seeded_shared_corpus):
         """Create a chat, PATCH the turn with enabled=false, then GET to verify."""
-        chat_id, turn_id, _ = _create_chat_or_skip(client, seeded_shared_corpus)
+        chat_id, turn_id, _ = _create_chat(client, seeded_shared_corpus)
 
         if not turn_id:
             pytest.skip("No turn_id in create_chat response")
@@ -137,7 +135,7 @@ class TestChatTurns:
 
     def test_delete_chat_turn(self, client, seeded_shared_corpus):
         """Create a chat, delete the turn, and verify it returns 404 or error."""
-        chat_id, turn_id, _ = _create_chat_or_skip(client, seeded_shared_corpus)
+        chat_id, turn_id, _ = _create_chat(client, seeded_shared_corpus)
 
         if not turn_id:
             pytest.skip("No turn_id in create_chat response")

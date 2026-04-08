@@ -37,8 +37,7 @@ class TestAgentCorporaSearch:
     def test_create_agent_with_corpora_search_tool(self, client, seeded_corpus, unique_id):
         """Create agent with corpora_search tool, verify config persisted."""
         resp, agent_key = self._create_agent_with_search_tool(client, seeded_corpus, unique_id)
-        if not resp.success:
-            pytest.skip(f"Could not create agent with search tool: {resp.data}")
+        assert resp.success, f"Create agent with search tool failed: {resp.status_code} - {resp.data}"
 
         try:
             get_resp = client.get_agent(agent_key)
@@ -66,13 +65,11 @@ class TestAgentCorporaSearch:
     def test_agent_corpora_search_returns_corpus_content(self, client, seeded_corpus, unique_id):
         """Send question to agent with search tool, verify answer uses corpus content."""
         resp, agent_key = self._create_agent_with_search_tool(client, seeded_corpus, unique_id)
-        if not resp.success:
-            pytest.skip(f"Could not create agent: {resp.data}")
+        assert resp.success, f"Create agent failed: {resp.status_code} - {resp.data}"
 
         try:
             session_resp = client.create_agent_session(agent_key)
-            if not session_resp.success:
-                pytest.skip(f"Could not create session: {session_resp.data}")
+            assert session_resp.success, f"Create session failed: {session_resp.status_code} - {session_resp.data}"
 
             session_key = session_resp.data.get("key")
             wait_for(

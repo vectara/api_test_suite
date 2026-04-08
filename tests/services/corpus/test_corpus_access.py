@@ -22,8 +22,7 @@ class TestCorpusAccess:
         corpus_key = f"access_test_{uid}"
 
         create_corpus_resp = client.create_corpus(name=f"Access Test {uid}", key=corpus_key)
-        if not create_corpus_resp.success:
-            pytest.skip(f"Could not create corpus: {create_corpus_resp.data}")
+        assert create_corpus_resp.success, f"Create corpus failed: {create_corpus_resp.status_code} - {create_corpus_resp.data}"
 
         try:
             wait_for(
@@ -46,13 +45,11 @@ class TestCorpusAccess:
                 api_key_role="serving",
                 corpus_keys=[corpus_key],
             )
-            if not create_key_resp.success:
-                pytest.skip(f"Could not create API key: {create_key_resp.data}")
+            assert create_key_resp.success, f"Create API key failed: {create_key_resp.status_code} - {create_key_resp.data}"
 
             key_id = create_key_resp.data.get("id")
             api_key_value = create_key_resp.data.get("api_key") or create_key_resp.data.get("secret_key")
-            if not api_key_value:
-                pytest.skip("Created API key response missing 'api_key'/'secret_key' value")
+            assert api_key_value, f"API key response missing 'api_key'/'secret_key' value: {create_key_resp.data}"
 
             try:
                 scoped_client = VectaraClient(config)

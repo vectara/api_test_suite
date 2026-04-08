@@ -26,8 +26,7 @@ class TestFilterAttributeTypes:
                 {"name": "is_public", "level": "part", "type": "boolean", "indexed": True},
             ],
         )
-        if not create_resp.success:
-            pytest.skip(f"Could not create corpus with filters: {create_resp.data}")
+        assert create_resp.success, f"Create corpus with filters failed: {create_resp.status_code} - {create_resp.data}"
 
         try:
             wait_for(
