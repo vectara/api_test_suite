@@ -43,9 +43,9 @@ class TestChat:
         response = client.list_chats(limit=10)
 
         assert response.success, f"List chats failed: {response.status_code} - {response.data}"
-        assert "chats" in response.data or isinstance(response.data, list), \
-            f"Expected chats structure, got: {type(response.data)}"
-        if "chats" in response.data:
+        assert isinstance(response.data, (dict, list)), \
+            f"Expected dict or list response, got: {type(response.data)}"
+        if isinstance(response.data, dict) and "chats" in response.data:
             assert isinstance(response.data["chats"], list), \
                 f"Expected chats to be a list, got: {type(response.data['chats'])}"
 

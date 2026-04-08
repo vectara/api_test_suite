@@ -73,48 +73,62 @@ class TestCompactionConfig:
 class TestManualCompaction:
     """Manual compaction via the events endpoint."""
 
-    def test_manual_compaction_on_session(self, client, shared_agent):
-        """manualCompaction_streamingOnIdleSession — send compact to a session with turns."""
-        session_resp = client.create_agent_session(shared_agent)
-        assert session_resp.success, f"Create session failed: {session_resp.status_code} - {session_resp.data}"
+    def test_manual_compaction_on_session(self, client, unique_id):
+        """manualCompaction — create agent with keep_recent_inputs=1, send 3 turns, compact."""
+        agent_key = f"compact_manual_{unique_id}"
+        agent_resp = client.create_agent(
+            name=f"Compact Manual {unique_id}",
+            agent_key=agent_key,
+            compaction={"enabled": True, "threshold_percent": 50, "keep_recent_inputs": 1},
+        )
+        assert agent_resp.success, f"Create agent failed: {agent_resp.status_code} - {agent_resp.data}"
 
-        session_key = session_resp.data.get("key")
         try:
-            wait_for(
-                lambda: client.get_agent_session(shared_agent, session_key).success,
-                timeout=10, interval=0.5,
-                description="session available",
-            )
+            session_resp = client.create_agent_session(agent_key)
+            assert session_resp.success, f"Create session failed: {session_resp.status_code} - {session_resp.data}"
 
-            turn1 = client.execute_agent(shared_agent, "Tell me about AI", session_id=session_key)
-            assert turn1.success, f"Turn 1 failed: {turn1.status_code} - {turn1.data}"
+            session_key = session_resp.data.get("key")
+            try:
+                wait_for(
+                    lambda: client.get_agent_session(agent_key, session_key).success,
+                    timeout=10, interval=0.5,
+                    description="session available",
+                )
 
-            turn2 = client.execute_agent(shared_agent, "What about machine learning?", session_id=session_key)
-            assert turn2.success, f"Turn 2 failed: {turn2.status_code} - {turn2.data}"
+                for i, msg in enumerate(["Tell me about AI", "What about machine learning?", "How do neural networks work?"], 1):
+                    turn = client.execute_agent(agent_key, msg, session_id=session_key)
+                    assert turn.success, f"Turn {i} failed: {turn.status_code} - {turn.data}"
 
-            events_before = client.list_session_events(shared_agent, session_key, limit=100)
-            visible_before = len(events_before.data.get("events", []))
-            assert visible_before >= 4, f"Expected at least 4 events (2 turns), got {visible_before}"
+                wait_for(
+                    lambda: len(client.list_session_events(agent_key, session_key, limit=100).data.get("events", [])) >= 6,
+                    timeout=20, interval=2,
+                    description="at least 6 events (3 turns) to be committed",
+                )
 
-            compact_resp = client.compact_session(shared_agent, session_key)
-            assert compact_resp.success or compact_resp.status_code == 201, \
-                f"Compact failed: {compact_resp.status_code} - {compact_resp.data}"
+                events_before = client.list_session_events(agent_key, session_key, limit=100)
+                visible_before = len(events_before.data.get("events", []))
 
-            compact_events = compact_resp.data.get("events", [])
-            compact_types = [e.get("type") for e in compact_events]
-            assert "compaction" in compact_types or "compaction_started" in compact_types, \
-                f"Expected compaction event in response, got types: {compact_types}"
+                compact_resp = client.compact_session(agent_key, session_key)
+                assert compact_resp.success or compact_resp.status_code == 201, \
+                    f"Compact failed: {compact_resp.status_code} - {compact_resp.data}"
 
-            events_after = client.list_session_events(shared_agent, session_key, limit=100)
-            visible_after = len(events_after.data.get("events", []))
+                compact_events = compact_resp.data.get("events", [])
+                compact_types = [e.get("type") for e in compact_events]
+                assert "compaction" in compact_types or "compaction_started" in compact_types, \
+                    f"Expected compaction event in response, got types: {compact_types}"
 
-            all_events = client.list_session_events(shared_agent, session_key, limit=100, include_hidden=True)
-            total_after = len(all_events.data.get("events", []))
-            assert total_after >= visible_before, \
-                f"Hidden events should still exist: total={total_after} visible_before={visible_before}"
+                all_events = client.list_session_events(agent_key, session_key, limit=100, include_hidden=True)
+                total_after = len(all_events.data.get("events", []))
+                assert total_after >= visible_before, \
+                    f"Hidden events should still exist: total={total_after} visible_before={visible_before}"
+            finally:
+                try:
+                    client.delete_agent_session(agent_key, session_key)
+                except Exception:
+                    pass
         finally:
             try:
-                client.delete_agent_session(shared_agent, session_key)
+                client.delete_agent(agent_key)
             except Exception:
                 pass
 
