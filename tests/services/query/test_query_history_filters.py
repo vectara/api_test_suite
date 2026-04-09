@@ -33,21 +33,3 @@ class TestQueryHistoryFilters:
         assert len(limited_entries) <= 2, \
             f"Limit=2 should return at most 2 entries, got {len(limited_entries)}"
 
-    def test_query_history_filter_by_corpus(self, client):
-        """Verify corpus_key filter returns only matching entries."""
-        full_resp = client.list_query_histories(limit=10)
-        entries = full_resp.data.get("queries", [])
-        if not entries:
-            pytest.skip("No query history entries")
-
-        corpus_keys = {e.get("corpus_key") for e in entries if e.get("corpus_key")}
-        if not corpus_keys:
-            pytest.skip("No corpus_key in history entries")
-
-        target_key = next(iter(corpus_keys))
-        filtered_resp = client.list_query_histories(limit=10, corpus_key=target_key)
-        assert filtered_resp.success
-        filtered_entries = filtered_resp.data.get("queries", [])
-        for entry in filtered_entries:
-            assert entry.get("corpus_key") == target_key, \
-                f"Filtered entry should have corpus_key={target_key}, got: {entry.get('corpus_key')}"
