@@ -49,7 +49,7 @@ PROFILE_MARKERS = {
 }
 
 # Available services (auto-discovered from tests/services/ subdirectories)
-AVAILABLE_SERVICES = ["agents", "auth", "chat", "corpus", "indexing", "query"]
+AVAILABLE_SERVICES = ["agents", "auth", "chat", "corpus", "indexing", "llm", "pipelines", "query", "tools", "users"]
 
 
 def get_console():

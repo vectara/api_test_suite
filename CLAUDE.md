@@ -48,6 +48,7 @@
 - Use `wait_for()` from `utils/waiters.py` instead of `time.sleep()` for async operations.
 - Cleanup resources in `try/finally` blocks.
 - Module-scoped fixtures for shared corpora (read-heavy tests), function-scoped for CRUD tests.
+- **Assertions must verify actual behavior, not just HTTP status.** Always verify response data, field values, and state changes — not just `response.success`.
 
 ## General Behavior
 - Treat the user as an expert.

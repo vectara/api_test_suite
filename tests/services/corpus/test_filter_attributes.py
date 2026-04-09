@@ -37,8 +37,16 @@ class TestFilterAttributes:
 
         assert response.success, f"Corpus creation with metadata failed: {response.status_code} - {response.data}"
 
-        # Cleanup using the actual key
+        # Verify filter attributes were persisted
         actual_key = response.data.get("key")
+        get_resp = client.get_corpus(actual_key)
+        assert get_resp.success, f"GET corpus failed: {get_resp.status_code}"
+        attrs = get_resp.data.get("filter_attributes", [])
+        attr_names = [a.get("name") for a in attrs]
+        assert "category" in attr_names, f"Expected 'category' in filter attributes, got: {attr_names}"
+        assert "priority" in attr_names, f"Expected 'priority' in filter attributes, got: {attr_names}"
+
+        # Cleanup using the actual key
         if actual_key:
             try:
                 client.delete_corpus(actual_key)

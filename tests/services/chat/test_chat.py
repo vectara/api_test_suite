@@ -30,6 +30,7 @@ class TestChat:
 
         # Should return chat ID
         chat_id = response.data.get("chat_id")
+        assert chat_id is not None, f"Response should contain chat_id, got: {response.data}"
         if chat_id:
             # Cleanup
             try:
@@ -42,6 +43,11 @@ class TestChat:
         response = client.list_chats(limit=10)
 
         assert response.success, f"List chats failed: {response.status_code} - {response.data}"
+        assert isinstance(response.data, (dict, list)), \
+            f"Expected dict or list response, got: {type(response.data)}"
+        if isinstance(response.data, dict) and "chats" in response.data:
+            assert isinstance(response.data["chats"], list), \
+                f"Expected chats to be a list, got: {type(response.data['chats'])}"
 
     def test_chat_turn(self, client, seeded_shared_corpus):
         """Test adding turns to a chat conversation."""
@@ -67,6 +73,12 @@ class TestChat:
             )
 
             assert turn_response.success, f"Add chat turn failed: {turn_response.status_code} - {turn_response.data}"
+            assert turn_response.data is not None, "Turn response should have data"
+            turn_has_content = (
+                turn_response.data.get("answer") is not None
+                or turn_response.data.get("turn_id") is not None
+            )
+            assert turn_has_content, f"Turn response should have answer or turn_id, got: {turn_response.data}"
         finally:
             # Cleanup
             client.delete_chat(chat_id)
@@ -90,3 +102,7 @@ class TestChat:
         delete_response = client.delete_chat(chat_id)
 
         assert delete_response.success, f"Delete chat failed: {delete_response.status_code} - {delete_response.data}"
+
+        get_resp = client.get_chat(chat_id)
+        assert get_resp.status_code == 404, \
+            f"Deleted chat should return 404, got {get_resp.status_code}"

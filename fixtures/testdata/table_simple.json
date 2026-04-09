@@ -1,0 +1,179 @@
+[
+  {
+    "title": "Detailed Report - Provinces",
+    "data": {
+      "headers": [
+        [
+          {
+            "text_value": "Province"
+          },
+          {
+            "text_value": "Gross Bet"
+          },
+          {
+            "text_value": "Total Take Out"
+          },
+          {
+            "text_value": "Fed. Levy"
+          }
+        ]
+      ],
+      "rows": [
+        [
+          {
+            "text_value": "Alberta"
+          },
+          {
+            "text_value": "$142,265,180.20"
+          },
+          {
+            "text_value": "$30,155,614.28"
+          },
+          {
+            "text_value": "$1,138,121.42"
+          }
+        ],
+        [
+          {
+            "text_value": "British Columbia"
+          },
+          {
+            "text_value": "$159,023,358.40"
+          },
+          {
+            "text_value": "$34,564,933.67"
+          },
+          {
+            "text_value": "$1,272,186.85"
+          }
+        ],
+        [
+          {
+            "text_value": "Manitoba"
+          },
+          {
+            "text_value": "$26,685,857.60"
+          },
+          {
+            "text_value": "$6,411,191.02"
+          },
+          {
+            "text_value": "$213,486.83"
+          }
+        ],
+        [
+          {
+            "text_value": "New Brunswick"
+          },
+          {
+            "text_value": "$5,058,457.60"
+          },
+          {
+            "text_value": "$1,207,652.69"
+          },
+          {
+            "text_value": "$40,467.66"
+          }
+        ],
+        [
+          {
+            "text_value": "Newfoundland and Labrador"
+          },
+          {
+            "text_value": "$1,254,777.60"
+          },
+          {
+            "text_value": "$284,695.97"
+          },
+          {
+            "text_value": "$10,038.22"
+          }
+        ],
+        [
+          {
+            "text_value": "Nova Scotia"
+          },
+          {
+            "text_value": "$12,153,552.40"
+          },
+          {
+            "text_value": "$2,821,183.72"
+          },
+          {
+            "text_value": "$97,228.40"
+          }
+        ],
+        [
+          {
+            "text_value": "Ontario"
+          },
+          {
+            "text_value": "$917,592,843.04"
+          },
+          {
+            "text_value": "$196,439,489.08"
+          },
+          {
+            "text_value": "$7,340,742.65"
+          }
+        ],
+        [
+          {
+            "text_value": "Prince Edward Island"
+          },
+          {
+            "text_value": "$7,076,151.80"
+          },
+          {
+            "text_value": "$1,789,369.77"
+          },
+          {
+            "text_value": "$56,609.21"
+          }
+        ],
+        [
+          {
+            "text_value": "Quebec"
+          },
+          {
+            "text_value": "$53,067,171.20"
+          },
+          {
+            "text_value": "$11,538,446.66"
+          },
+          {
+            "text_value": "$424,537.32"
+          }
+        ],
+        [
+          {
+            "text_value": "Saskatchewan"
+          },
+          {
+            "text_value": "$9,835,176.00"
+          },
+          {
+            "text_value": "$2,355,458.63"
+          },
+          {
+            "text_value": "$78,681.39"
+          }
+        ],
+        [
+          {
+            "text_value": "Total"
+          },
+          {
+            "text_value": "$1,334,012,525.84"
+          },
+          {
+            "text_value": "$287,568,035.49"
+          },
+          {
+            "text_value": "$10,672,099.95"
+          }
+        ]
+      ]
+    }
+  }
+]

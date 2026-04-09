@@ -23,6 +23,8 @@ class TestDocumentIndex:
         )
 
         assert response.success, f"Document indexing failed: {response.status_code} - {response.data}"
+        assert response.data.get("id") is not None, \
+            f"Index response should contain document id, got: {response.data}"
 
 
 @pytest.mark.core

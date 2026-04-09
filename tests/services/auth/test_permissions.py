@@ -31,6 +31,8 @@ class TestPermissions:
         )
 
         assert response.success, f"QueryService permission check failed: {response.status_code}. " f"Ensure API key has QueryService role enabled."
+        results = response.data.get("search_results", [])
+        assert isinstance(results, list), f"Expected search_results list, got: {type(results)}"
 
     def test_api_key_has_index_permission(self, client, shared_corpus):
         """Test that API key has IndexService permission."""
@@ -41,6 +43,8 @@ class TestPermissions:
         )
 
         assert response.success, f"IndexService permission check failed: {response.status_code}. " f"Ensure API key has IndexService role enabled."
+        assert response.data.get("id") is not None, \
+            f"Index response should contain document id, got: {response.data}"
 
     def test_list_corpora_works(self, client):
         """Test basic corpus listing (requires valid authentication)."""

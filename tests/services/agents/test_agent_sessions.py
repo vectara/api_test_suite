@@ -23,3 +23,6 @@ class TestAgentSessions:
         response = client.list_agent_sessions(shared_agent, limit=10)
 
         assert response.success, f"List sessions failed: {response.status_code} - {response.data}"
+        assert "sessions" in response.data, f"Response missing 'sessions' key: {response.data}"
+        sessions = response.data["sessions"]
+        assert isinstance(sessions, list), f"Expected list, got {type(sessions)}"
