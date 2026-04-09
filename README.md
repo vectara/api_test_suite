@@ -4,7 +4,7 @@ A Python-based test suite for validating Vectara API functionality. Designed for
 
 ## Prerequisites
 
-- Python 3.10 or higher
+- Python 3.9 or higher
 - Vectara Personal API key
 
 ## Installation
@@ -19,15 +19,16 @@ pip install -r requirements.txt
 
 ```bash
 export VECTARA_API_KEY=your_api_key_here
+export VECTARA_BASE_URL=https://api.vectara.io  # or https://api.vectara.dev for staging
 python run_tests.py --profile sanity
 ```
 
 ### Profiles
 
 ```bash
-python run_tests.py --profile sanity       # Fast deploy gate (~30s, 7 tests)
-python run_tests.py --profile core         # Post-deploy verification (~5 min, 40 tests)
-python run_tests.py --profile regression   # Edge cases + core (~56 tests)
+python run_tests.py --profile sanity       # Fast deploy gate
+python run_tests.py --profile core         # Post-deploy verification
+python run_tests.py --profile regression   # Edge cases + core
 python run_tests.py --profile full         # Everything including workflows
 ```
 
@@ -71,6 +72,7 @@ python run_tests.py --profile core -p 4
 | `VECTARA_TIMEOUT` | Request timeout in seconds (default: 30) | No |
 | `VECTARA_LLM_NAME` | LLM model name for generation | No |
 | `VECTARA_GENERATION_PRESET` | Generation preset name | No |
+| `OPENAI_API_KEY` | OpenAI key for BYOL LLM tests (regression only) | No |
 
 ## Project Structure
 
@@ -78,13 +80,17 @@ python run_tests.py --profile core -p 4
 tests/
 ├── conftest.py                  # Marker registration, shared fixtures
 ├── services/
-│   ├── conftest.py              # Shared corpus fixtures
-│   ├── auth/                    # API key validation, permissions
-│   ├── corpus/                  # Corpus CRUD, filter attributes, pagination
-│   ├── indexing/                # Document CRUD, metadata, large docs
-│   ├── query/                   # Semantic search, RAG, edge cases
-│   ├── chat/                    # Multi-turn conversations
-│   └── agents/                  # Agent CRUD, execution, sessions
+│   ├── conftest.py              # Shared corpus/agent fixtures
+│   ├── agents/                  # Agent CRUD, execution, sessions, compaction, context, corpora search
+│   ├── auth/                    # API key validation, permissions, app clients
+│   ├── chat/                    # Chat turns, multi-turn, validation
+│   ├── corpus/                  # Corpus CRUD, lifecycle, access, filter attributes, validation
+│   ├── indexing/                # Document CRUD, lifecycle, metadata, upload, bulk ops
+│   ├── llm/                     # LLM CRUD
+│   ├── pipelines/               # Pipeline listing
+│   ├── query/                   # Semantic search, RAG, streaming, filters, rerankers, FCS, pagination, history
+│   ├── tools/                   # Tool CRUD, lifecycle
+│   └── users/                   # User CRUD
 └── workflows/                   # Cross-service E2E flows
 utils/
 ├── client.py                    # Vectara API client
@@ -105,18 +111,38 @@ Workflow tests use `@pytest.mark.workflow`.
 
 | Service | What it tests |
 |---------|-------------|
-| `auth` | API key validation, permissions |
-| `corpus` | Corpus CRUD, filter attributes, pagination |
-| `indexing` | Document CRUD, metadata, special characters |
-| `query` | Semantic search, RAG summary, pagination |
-| `chat` | Multi-turn conversations |
-| `agents` | Agent CRUD, execution, sessions |
+| `agents` | Agent CRUD, corpora search tool, sessions CRUD/update, compaction, context preservation, execution, streaming, event visibility, forking, error cases |
+| `auth` | API key validation/lifecycle, permissions, app client CRUD, corpus access scoping |
+| `chat` | Chat CRUD, turns CRUD, multi-turn verification, validation |
+| `corpus` | Corpus CRUD, lifecycle (enable/disable/reset/compute size), filter attributes, access control, pagination, validation |
+| `indexing` | Document CRUD, lifecycle, metadata, upload, bulk delete, custom dimensions, file upload |
+| `query` | Semantic search, RAG, streaming (SSE), filters, rerankers, FCS, pagination, cross-corpus, generation presets, query history |
+| `users` | User CRUD, roles, enable/disable |
+| `tools` | Tool CRUD, enable/disable |
+| `llm` | LLM list, BYOL create/delete |
+| `pipelines` | Pipeline listing |
+
+## Test Design Principles
+
+- **Assert content, not just status codes** — every test verifies actual response fields, not just HTTP 200
+- **Core API failures FAIL, not skip** — if agent/corpus/user creation returns 500, the test fails. Skip is only for optional features (OpenAI key not set, internal-only APIs, plan limitations)
+- **wait_for() after stateful operations** — polling instead of sleep for eventual consistency
+- **try/finally cleanup** — all created resources are cleaned up even on test failure
+- **Capability gating** — optional APIs use module-level probe fixtures that skip gracefully
+
+## Expected Skips
+
+| Test | Reason |
+|------|--------|
+| `test_custom_dimensions_boost` | Account plan doesn't support custom dimensions |
+| `test_create_and_delete_llm` | Requires funded `OPENAI_API_KEY` |
 
 ## Troubleshooting
 
 ### "API authentication failed"
 - Verify your API key is correct and is a Personal API key
 - Check if the key has expired or been disabled
+- For staging: use `VECTARA_BASE_URL=https://api.vectara.dev`
 
 ### "Connection error"
 - Verify the base URL is correct
