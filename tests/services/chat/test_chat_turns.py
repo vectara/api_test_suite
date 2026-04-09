@@ -46,10 +46,8 @@ class TestChatTurns:
             response = client.get_chat(chat_id)
 
             assert response.success, f"Get chat failed: {response.status_code} - {response.data}"
-            assert response.data.get("id") is not None, \
-                f"Response should contain id, got: {response.data}"
-            assert re.match(r"cht_.+", response.data["id"]), \
-                f"id should match cht_.+ pattern, got: {response.data['id']}"
+            assert response.data.get("id") is not None, f"Response should contain id, got: {response.data}"
+            assert re.match(r"cht_.+", response.data["id"]), f"id should match cht_.+ pattern, got: {response.data['id']}"
         finally:
             try:
                 client.delete_chat(chat_id)
@@ -60,8 +58,7 @@ class TestChatTurns:
         """GET a non-existent chat should return 404."""
         response = client.get_chat("cht_nonexistent_000000000000")
 
-        assert response.status_code == 404, \
-            f"Expected 404 for non-existent chat, got {response.status_code}"
+        assert response.status_code == 404, f"Expected 404 for non-existent chat, got {response.status_code}"
 
     def test_list_chat_turns(self, client, seeded_shared_corpus):
         """Create a chat, list its turns, and verify at least 1 turn exists."""
@@ -75,8 +72,7 @@ class TestChatTurns:
             assert len(turns) >= 1, f"Expected at least 1 turn, got {len(turns)}"
 
             first_turn = turns[0]
-            assert first_turn.get("id") is not None, \
-                f"Turn should have id, got: {first_turn}"
+            assert first_turn.get("id") is not None, f"Turn should have id, got: {first_turn}"
         finally:
             try:
                 client.delete_chat(chat_id)
@@ -94,12 +90,9 @@ class TestChatTurns:
             response = client.get_chat_turn(chat_id, turn_id)
 
             assert response.success, f"Get turn failed: {response.status_code} - {response.data}"
-            assert response.data.get("id") == turn_id, \
-                f"turn id mismatch: expected {turn_id}, got {response.data.get('id')}"
-            assert re.match(r"trn_.+", response.data["id"]), \
-                f"turn id should match trn_.+ pattern, got: {response.data['id']}"
-            assert response.data.get("chat_id") == chat_id, \
-                f"chat_id mismatch in turn: expected {chat_id}, got {response.data.get('chat_id')}"
+            assert response.data.get("id") == turn_id, f"turn id mismatch: expected {turn_id}, got {response.data.get('id')}"
+            assert re.match(r"trn_.+", response.data["id"]), f"turn id should match trn_.+ pattern, got: {response.data['id']}"
+            assert response.data.get("chat_id") == chat_id, f"chat_id mismatch in turn: expected {chat_id}, got {response.data.get('chat_id')}"
         finally:
             try:
                 client.delete_chat(chat_id)
@@ -120,13 +113,11 @@ class TestChatTurns:
                 enabled=False,
             )
 
-            assert update_response.success, \
-                f"Update turn failed: {update_response.status_code} - {update_response.data}"
+            assert update_response.success, f"Update turn failed: {update_response.status_code} - {update_response.data}"
 
             get_response = client.get_chat_turn(chat_id, turn_id)
             assert get_response.success, f"Get turn after update failed: {get_response.status_code}"
-            assert get_response.data.get("enabled") is False, \
-                f"Expected enabled=False after update, got: {get_response.data.get('enabled')}"
+            assert get_response.data.get("enabled") is False, f"Expected enabled=False after update, got: {get_response.data.get('enabled')}"
         finally:
             try:
                 client.delete_chat(chat_id)
@@ -143,12 +134,10 @@ class TestChatTurns:
         try:
             delete_response = client.delete_chat_turn(chat_id, turn_id)
 
-            assert delete_response.success, \
-                f"Delete turn failed: {delete_response.status_code} - {delete_response.data}"
+            assert delete_response.success, f"Delete turn failed: {delete_response.status_code} - {delete_response.data}"
 
             get_response = client.get_chat_turn(chat_id, turn_id)
-            assert get_response.status_code in (404, 400), \
-                f"Deleted turn should return 404 or 400, got {get_response.status_code}"
+            assert get_response.status_code in (404, 400), f"Deleted turn should return 404 or 400, got {get_response.status_code}"
         finally:
             try:
                 client.delete_chat(chat_id)

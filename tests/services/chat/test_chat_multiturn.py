@@ -82,8 +82,7 @@ class TestChatMultiTurn:
             assert len(turns_with_answers) > 0, f"Expected at least one turn with an answer"
             for turn in turns_with_answers:
                 answer = turn["answer"]
-                assert len(answer) > 20, \
-                    f"Turn answer should be substantive (>20 chars), got {len(answer)} chars: {answer[:50]!r}"
+                assert len(answer) > 20, f"Turn answer should be substantive (>20 chars), got {len(answer)} chars: {answer[:50]!r}"
         finally:
             try:
                 client.delete_chat(chat_id)

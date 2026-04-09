@@ -43,8 +43,7 @@ class TestPermissions:
         )
 
         assert response.success, f"IndexService permission check failed: {response.status_code}. " f"Ensure API key has IndexService role enabled."
-        assert response.data.get("id") is not None, \
-            f"Index response should contain document id, got: {response.data}"
+        assert response.data.get("id") is not None, f"Index response should contain document id, got: {response.data}"
 
     def test_list_corpora_works(self, client):
         """Test basic corpus listing (requires valid authentication)."""

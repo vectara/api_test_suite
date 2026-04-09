@@ -6,6 +6,7 @@ FCS is enabled by default (OpenAPI spec: default=true) when generation is reques
 """
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -17,23 +18,30 @@ class TestFactualConsistency:
         """Test that RAG query returns a valid factual consistency score."""
         wait_for(
             lambda: len(
-                client.post("/v2/query", data={
-                    "query": "technology",
-                    "search": {"corpora": [{"corpus_key": seeded_shared_corpus}], "limit": 5},
-                }).data.get("search_results", [])
-            ) > 0,
-            timeout=20, interval=2,
+                client.post(
+                    "/v2/query",
+                    data={
+                        "query": "technology",
+                        "search": {"corpora": [{"corpus_key": seeded_shared_corpus}], "limit": 5},
+                    },
+                ).data.get("search_results", [])
+            )
+            > 0,
+            timeout=20,
+            interval=2,
             description="seeded corpus to return search results",
         )
 
-        resp = client.post("/v2/query", data={
-            "query": "artificial intelligence and machine learning",
-            "search": {"corpora": [{"corpus_key": seeded_shared_corpus}], "limit": 10},
-            "generation": {},
-        })
+        resp = client.post(
+            "/v2/query",
+            data={
+                "query": "artificial intelligence and machine learning",
+                "search": {"corpora": [{"corpus_key": seeded_shared_corpus}], "limit": 10},
+                "generation": {},
+            },
+        )
         assert resp.success, f"RAG query failed: {resp.status_code} - {resp.data}"
 
         score = resp.data.get("factual_consistency_score")
-        assert score is not None, \
-            f"Expected factual_consistency_score in response, got keys: {list(resp.data.keys())}"
+        assert score is not None, f"Expected factual_consistency_score in response, got keys: {list(resp.data.keys())}"
         assert 0.0 <= score <= 1.0, f"FCS score out of range [0, 1]: {score}"

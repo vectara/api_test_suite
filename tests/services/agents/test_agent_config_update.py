@@ -50,8 +50,7 @@ class TestAgentConfigUpdate:
             get_resp = client.get_agent(agent_id)
             assert get_resp.success
             agent_metadata = get_resp.data.get("metadata", {})
-            assert agent_metadata.get("environment") == "test", \
-                f"Metadata not persisted: {agent_metadata}"
+            assert agent_metadata.get("environment") == "test", f"Metadata not persisted: {agent_metadata}"
         finally:
             try:
                 client.delete_agent(agent_id)
@@ -67,8 +66,7 @@ class TestAgentConfigUpdate:
 
             get_resp = client.get_agent(agent_id)
             assert get_resp.success
-            assert get_resp.data.get("enabled") is False, \
-                f"Expected disabled, got: {get_resp.data.get('enabled')}"
+            assert get_resp.data.get("enabled") is False, f"Expected disabled, got: {get_resp.data.get('enabled')}"
 
             enable_resp = client.update_agent(agent_id, enabled=True)
             assert enable_resp.success

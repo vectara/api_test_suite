@@ -5,6 +5,7 @@ Verify that queries are recorded and retrievable via the query history API.
 """
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -41,5 +42,4 @@ class TestQueryHistory:
             pytest.skip("No query history entries available")
 
         entries_with_gen = [e for e in entries if e.get("generation")]
-        assert len(entries_with_gen) > 0, \
-            f"Expected at least one entry with generation content, got keys: {[list(e.keys()) for e in entries[:2]]}"
+        assert len(entries_with_gen) > 0, f"Expected at least one entry with generation content, got keys: {[list(e.keys()) for e in entries[:2]]}"

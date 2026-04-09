@@ -92,9 +92,9 @@ class TestCustomDimensions:
 
         # First result should be the high-importance part
         first_result_text = results[0].get("text", "")
-        assert "quantum computing" in first_result_text.lower() or "high-importance" in first_result_text.lower(), (
-            f"Expected high-importance part first, got: {first_result_text[:100]}"
-        )
+        assert (
+            "quantum computing" in first_result_text.lower() or "high-importance" in first_result_text.lower()
+        ), f"Expected high-importance part first, got: {first_result_text[:100]}"
 
         # Cleanup
         try:

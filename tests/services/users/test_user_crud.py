@@ -7,6 +7,7 @@ Tests for user create, read, update, and delete operations.
 import uuid
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -44,10 +45,10 @@ class TestUserCrud:
             assert resp.success, f"Create user failed: {resp.status_code} - {resp.data}"
             assert resp.data.get("id") is not None, f"Response should contain 'id': {resp.data}"
 
-            assert resp.data.get("email") == email, \
-                f"Create response should echo back email: expected {email!r}, got {resp.data.get('email')!r}"
-            assert resp.data.get("description") == description, \
-                f"Create response should echo back description: expected {description!r}, got {resp.data.get('description')!r}"
+            assert resp.data.get("email") == email, f"Create response should echo back email: expected {email!r}, got {resp.data.get('email')!r}"
+            assert (
+                resp.data.get("description") == description
+            ), f"Create response should echo back description: expected {description!r}, got {resp.data.get('description')!r}"
         finally:
             username = _extract_username(resp, email) if resp.success else None
             if username:
@@ -67,10 +68,7 @@ class TestUserCrud:
             list_resp = client.list_users()
             assert list_resp.success, f"List users failed: {list_resp.status_code}"
             users = list_resp.data.get("users", list_resp.data if isinstance(list_resp.data, list) else [])
-            found = any(
-                u.get("username") == username or u.get("id") == username or u.get("email") == email
-                for u in users
-            )
+            found = any(u.get("username") == username or u.get("id") == username or u.get("email") == email for u in users)
             assert found, f"User {username} (email={email}) not found in listing"
         finally:
             try:
@@ -88,8 +86,7 @@ class TestUserCrud:
         try:
             get_resp = client.get_user(username)
             assert get_resp.success, f"Get user failed: {get_resp.status_code} - {get_resp.data}"
-            assert get_resp.data.get("email") == email, \
-                f"Expected email={email}, got: {get_resp.data.get('email')}"
+            assert get_resp.data.get("email") == email, f"Expected email={email}, got: {get_resp.data.get('email')}"
         finally:
             try:
                 client.delete_user(username)
@@ -130,8 +127,7 @@ class TestUserCrud:
 
             get_resp = client.get_user(username)
             assert get_resp.success
-            assert get_resp.data.get("enabled") is False, \
-                f"Expected disabled, got: {get_resp.data.get('enabled')}"
+            assert get_resp.data.get("enabled") is False, f"Expected disabled, got: {get_resp.data.get('enabled')}"
 
             enable_resp = client.update_user(username, enabled=True)
             assert enable_resp.success
@@ -156,5 +152,4 @@ class TestUserCrud:
         assert delete_resp.success, f"Delete user failed: {delete_resp.status_code} - {delete_resp.data}"
 
         get_resp = client.get_user(username)
-        assert get_resp.status_code == 404, \
-            f"Deleted user should return 404, got {get_resp.status_code}"
+        assert get_resp.status_code == 404, f"Deleted user should return 404, got {get_resp.status_code}"

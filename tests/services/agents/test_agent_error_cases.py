@@ -21,8 +21,7 @@ class TestAgentErrorCases:
             "Hello",
             session_id=f"ase_fake_{uuid.uuid4().hex[:8]}",
         )
-        assert resp.status_code == 404, \
-            f"Expected 404 for non-existent session, got {resp.status_code}: {resp.data}"
+        assert resp.status_code == 404, f"Expected 404 for non-existent session, got {resp.status_code}: {resp.data}"
 
     def test_send_message_nonexistent_agent(self, client):
         """testNonSseInputOnNonExistentAgent — 404 for bad agent."""
@@ -33,8 +32,7 @@ class TestAgentErrorCases:
                 "messages": [{"type": "text", "content": "Hello"}],
             },
         )
-        assert resp.status_code == 404, \
-            f"Expected 404 for non-existent agent, got {resp.status_code}: {resp.data}"
+        assert resp.status_code == 404, f"Expected 404 for non-existent agent, got {resp.status_code}: {resp.data}"
 
     def test_fork_session_continue_conversation(self, client, agent_with_session):
         """forkSession_withoutCompaction_newSessionCanContinueConversation."""
@@ -50,15 +48,16 @@ class TestAgentErrorCases:
         forked_key = fork_resp.data.get("key")
         try:
             from utils.waiters import wait_for
+
             wait_for(
                 lambda: client.get_agent_session(agent_key, forked_key).success,
-                timeout=10, interval=0.5,
+                timeout=10,
+                interval=0.5,
                 description="forked session available",
             )
 
             msg_resp = client.execute_agent(agent_key, "Continue the conversation", session_id=forked_key)
-            assert msg_resp.success, \
-                f"Should be able to chat in forked session: {msg_resp.status_code} - {msg_resp.data}"
+            assert msg_resp.success, f"Should be able to chat in forked session: {msg_resp.status_code} - {msg_resp.data}"
 
             response_events = msg_resp.data.get("events", [])
             has_output = any(e.get("type") == "agent_output" for e in response_events)

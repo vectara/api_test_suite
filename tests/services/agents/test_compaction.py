@@ -8,6 +8,7 @@ Ported from AgentSessionIntegrationTest.java compaction tests.
 import uuid
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -91,7 +92,8 @@ class TestManualCompaction:
             try:
                 wait_for(
                     lambda: client.get_agent_session(agent_key, session_key).success,
-                    timeout=10, interval=0.5,
+                    timeout=10,
+                    interval=0.5,
                     description="session available",
                 )
 
@@ -101,7 +103,8 @@ class TestManualCompaction:
 
                 wait_for(
                     lambda: len(client.list_session_events(agent_key, session_key, limit=100).data.get("events", [])) >= 6,
-                    timeout=20, interval=2,
+                    timeout=20,
+                    interval=2,
                     description="at least 6 events (3 turns) to be committed",
                 )
 
@@ -109,18 +112,17 @@ class TestManualCompaction:
                 visible_before = len(events_before.data.get("events", []))
 
                 compact_resp = client.compact_session(agent_key, session_key)
-                assert compact_resp.success or compact_resp.status_code == 201, \
-                    f"Compact failed: {compact_resp.status_code} - {compact_resp.data}"
+                assert compact_resp.success or compact_resp.status_code == 201, f"Compact failed: {compact_resp.status_code} - {compact_resp.data}"
 
                 compact_events = compact_resp.data.get("events", [])
                 compact_types = [e.get("type") for e in compact_events]
-                assert "compaction" in compact_types or "compaction_started" in compact_types, \
-                    f"Expected compaction event in response, got types: {compact_types}"
+                assert (
+                    "compaction" in compact_types or "compaction_started" in compact_types
+                ), f"Expected compaction event in response, got types: {compact_types}"
 
                 all_events = client.list_session_events(agent_key, session_key, limit=100, include_hidden=True)
                 total_after = len(all_events.data.get("events", []))
-                assert total_after >= visible_before, \
-                    f"Hidden events should still exist: total={total_after} visible_before={visible_before}"
+                assert total_after >= visible_before, f"Hidden events should still exist: total={total_after} visible_before={visible_before}"
             finally:
                 try:
                     client.delete_agent_session(agent_key, session_key)
@@ -141,7 +143,8 @@ class TestManualCompaction:
         try:
             wait_for(
                 lambda: client.get_agent_session(shared_agent, session_key).success,
-                timeout=10, interval=0.5,
+                timeout=10,
+                interval=0.5,
                 description="session available",
             )
 
@@ -149,8 +152,9 @@ class TestManualCompaction:
             compact_events = compact_resp.data.get("events", []) if compact_resp.success else []
             has_error = any(e.get("type") == "error" for e in compact_events)
 
-            assert not compact_resp.success or has_error, \
-                f"Compact on empty session should fail or return error event: {compact_resp.status_code} - {compact_resp.data}"
+            assert (
+                not compact_resp.success or has_error
+            ), f"Compact on empty session should fail or return error event: {compact_resp.status_code} - {compact_resp.data}"
         finally:
             try:
                 client.delete_agent_session(shared_agent, session_key)
@@ -188,8 +192,7 @@ class TestForkWithCompaction:
             assert forked_events.success
             forked_list = forked_events.data.get("events", [])
             forked_types = [e.get("type") for e in forked_list]
-            assert "compaction" in forked_types, \
-                f"Forked session should contain compaction event, got types: {forked_types}"
+            assert "compaction" in forked_types, f"Forked session should contain compaction event, got types: {forked_types}"
         finally:
             if forked_key:
                 try:
@@ -218,8 +221,7 @@ class TestForkWithCompaction:
         try:
             forked_events = client.list_session_events(agent_key, forked_key, limit=100)
             forked_ids = [e.get("id") for e in forked_events.data.get("events", [])]
-            assert len(forked_ids) <= len(events), \
-                f"Forked session should have fewer or equal events: forked={len(forked_ids)} source={len(events)}"
+            assert len(forked_ids) <= len(events), f"Forked session should have fewer or equal events: forked={len(forked_ids)} source={len(events)}"
         finally:
             if forked_key:
                 try:
@@ -238,5 +240,4 @@ class TestForkWithCompaction:
                 "include_up_to_event_id": "aev_nonexistent_fake_id",
             },
         )
-        assert fork_resp.status_code >= 400, \
-            f"Fork with bad event ID should fail: {fork_resp.status_code} - {fork_resp.data}"
+        assert fork_resp.status_code >= 400, f"Fork with bad event ID should fail: {fork_resp.status_code} - {fork_resp.data}"

@@ -20,9 +20,11 @@ class TestAgentExecutionStreaming:
         session_key = session_resp.data.get("key")
 
         from utils.waiters import wait_for
+
         wait_for(
             lambda: client.get_agent_session(shared_agent, session_key).success,
-            timeout=10, interval=0.5,
+            timeout=10,
+            interval=0.5,
             description="session to be available",
         )
 
@@ -38,10 +40,7 @@ class TestAgentExecutionStreaming:
         assert has_output, f"No output event found. Event types: {event_types}"
 
         output_events = [e for e in events if "output" in e.get("type", "") or "message" in e.get("type", "")]
-        has_content = any(
-            e.get("content") or e.get("data") or e.get("messages")
-            for e in output_events
-        )
+        has_content = any(e.get("content") or e.get("data") or e.get("messages") for e in output_events)
         assert has_content, f"Output events have no content: {output_events}"
 
         try:

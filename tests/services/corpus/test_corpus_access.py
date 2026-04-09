@@ -7,6 +7,7 @@ Tests for API key scoping and corpus-level access control.
 import uuid
 
 import pytest
+
 from utils.client import VectaraClient
 from utils.waiters import wait_for
 
@@ -27,7 +28,8 @@ class TestCorpusAccess:
         try:
             wait_for(
                 lambda: client.get_corpus(corpus_key).success,
-                timeout=10, interval=1,
+                timeout=10,
+                interval=1,
                 description="corpus to be available",
             )
 
@@ -35,7 +37,8 @@ class TestCorpusAccess:
             client.index_document(corpus_key, doc_id, "Test content for access control verification.")
             wait_for(
                 lambda: client.get_document(corpus_key, doc_id).success,
-                timeout=15, interval=1,
+                timeout=15,
+                interval=1,
                 description="document to be indexed",
             )
 
@@ -61,8 +64,7 @@ class TestCorpusAccess:
                     query_text="test content",
                     limit=5,
                 )
-                assert query_resp.success, \
-                    f"Scoped key should query its corpus: {query_resp.status_code} - {query_resp.data}"
+                assert query_resp.success, f"Scoped key should query its corpus: {query_resp.status_code} - {query_resp.data}"
                 results = query_resp.data.get("search_results", [])
                 assert isinstance(results, list)
 
@@ -72,8 +74,7 @@ class TestCorpusAccess:
                     query_text="test",
                     limit=5,
                 )
-                assert not other_resp.success, \
-                    "Scoped key should not query an unscoped corpus"
+                assert not other_resp.success, "Scoped key should not query an unscoped corpus"
             finally:
                 if key_id:
                     try:

@@ -5,6 +5,7 @@ Full lifecycle: index → query finds it → delete → query no longer finds it
 """
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -22,7 +23,8 @@ class TestDocumentLifecycle:
 
         wait_for(
             lambda: client.get_document(test_corpus, doc_id).success,
-            timeout=15, interval=1,
+            timeout=15,
+            interval=1,
             description="document to be indexed",
         )
 
@@ -37,7 +39,8 @@ class TestDocumentLifecycle:
 
         wait_for(
             lambda: client.get_document(test_corpus, doc_id).status_code == 404,
-            timeout=15, interval=1,
+            timeout=15,
+            interval=1,
             description="document to be deleted",
         )
 
@@ -53,5 +56,6 @@ class TestDocumentLifecycle:
         final_query = client.query(test_corpus, "Krakatoa volcano eruption", limit=10)
         assert final_query.success
         final_results = final_query.data.get("search_results", [])
-        assert not any("krakatoa" in r.get("text", "").lower() for r in final_results), \
-            f"Deleted doc should not appear in results, but found Krakatoa in {len(final_results)} results"
+        assert not any(
+            "krakatoa" in r.get("text", "").lower() for r in final_results
+        ), f"Deleted doc should not appear in results, but found Krakatoa in {len(final_results)} results"

@@ -6,6 +6,7 @@ that context is not shared between separate sessions.
 """
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -22,7 +23,8 @@ class TestAgentContextPreservation:
         try:
             wait_for(
                 lambda: client.get_agent_session(shared_agent, session_key).success,
-                timeout=10, interval=0.5,
+                timeout=10,
+                interval=0.5,
                 description="session available",
             )
 
@@ -51,10 +53,8 @@ class TestAgentContextPreservation:
             output_events = [e for e in events if e.get("type") == "agent_output"]
             output_text = " ".join(e.get("content", "") for e in output_events).lower()
 
-            assert "acme" in output_text, \
-                f"Turn 3 should reference 'Acme' from turn 1, got: {output_text[:200]}"
-            assert "semantic" in output_text or "search" in output_text, \
-                f"Turn 3 should reference 'semantic search' from turn 2, got: {output_text[:200]}"
+            assert "acme" in output_text, f"Turn 3 should reference 'Acme' from turn 1, got: {output_text[:200]}"
+            assert "semantic" in output_text or "search" in output_text, f"Turn 3 should reference 'semantic search' from turn 2, got: {output_text[:200]}"
         finally:
             try:
                 client.delete_agent_session(shared_agent, session_key)
@@ -76,7 +76,8 @@ class TestAgentContextPreservation:
             for key in [key_a, key_b]:
                 wait_for(
                     lambda k=key: client.get_agent_session(shared_agent, k).success,
-                    timeout=10, interval=0.5,
+                    timeout=10,
+                    interval=0.5,
                     description=f"session {key} available",
                 )
 
@@ -95,14 +96,10 @@ class TestAgentContextPreservation:
             assert resp_b.success, f"Session B message failed: {resp_b.data}"
 
             events_b = resp_b.data.get("events", [])
-            output_b = " ".join(
-                e.get("content", "") for e in events_b if e.get("type") == "agent_output"
-            ).lower()
+            output_b = " ".join(e.get("content", "") for e in events_b if e.get("type") == "agent_output").lower()
 
-            assert "xylophone" not in output_b and "7749" not in output_b, \
-                f"Session B should NOT know session A's secret code, but got: {output_b[:200]}"
-            assert "bartholomew" not in output_b, \
-                f"Session B should NOT know session A's pet name, but got: {output_b[:200]}"
+            assert "xylophone" not in output_b and "7749" not in output_b, f"Session B should NOT know session A's secret code, but got: {output_b[:200]}"
+            assert "bartholomew" not in output_b, f"Session B should NOT know session A's pet name, but got: {output_b[:200]}"
         finally:
             for key in [key_a, key_b]:
                 if key:

@@ -7,6 +7,7 @@ Tests for querying across multiple corpora simultaneously.
 import uuid
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -34,7 +35,8 @@ class TestCrossCorpusQuery:
             for key in [corpus1_key, corpus2_key]:
                 wait_for(
                     lambda k=key: client.get_corpus(k).success,
-                    timeout=10, interval=1,
+                    timeout=10,
+                    interval=1,
                     description=f"corpus {key} available",
                 )
 
@@ -44,27 +46,32 @@ class TestCrossCorpusQuery:
             for key, doc_id in [(corpus1_key, f"doc1_{unique_id}"), (corpus2_key, f"doc2_{unique_id}")]:
                 wait_for(
                     lambda k=key, d=doc_id: client.get_document(k, d).success,
-                    timeout=15, interval=1,
+                    timeout=15,
+                    interval=1,
                     description=f"document in {key} indexed",
                 )
 
-            query_resp = client.post("/v2/query", data={
-                "query": "important topics",
-                "search": {
-                    "corpora": [
-                        {"corpus_key": corpus1_key},
-                        {"corpus_key": corpus2_key},
-                    ],
-                    "limit": 10,
+            query_resp = client.post(
+                "/v2/query",
+                data={
+                    "query": "important topics",
+                    "search": {
+                        "corpora": [
+                            {"corpus_key": corpus1_key},
+                            {"corpus_key": corpus2_key},
+                        ],
+                        "limit": 10,
+                    },
                 },
-            })
+            )
             assert query_resp.success, f"Cross-corpus query failed: {query_resp.status_code}"
             results = query_resp.data.get("search_results", [])
             assert len(results) > 0, "Expected results from cross-corpus query"
 
             result_corpus_keys = {r.get("corpus_key") for r in results}
-            assert corpus1_key in result_corpus_keys or corpus2_key in result_corpus_keys, \
-                f"Expected results from at least one of the test corpora, got: {result_corpus_keys}"
+            assert (
+                corpus1_key in result_corpus_keys or corpus2_key in result_corpus_keys
+            ), f"Expected results from at least one of the test corpora, got: {result_corpus_keys}"
         finally:
             for key in [corpus1_key, corpus2_key]:
                 try:

@@ -8,6 +8,7 @@ ask questions, verify the agent uses corpus content in its answers.
 import uuid
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -45,17 +46,12 @@ class TestAgentCorporaSearch:
 
             tool_configs = get_resp.data.get("tool_configurations", {})
             if isinstance(tool_configs, dict):
-                has_search_tool = any(
-                    tc.get("type") == "corpora_search" for tc in tool_configs.values()
-                )
+                has_search_tool = any(tc.get("type") == "corpora_search" for tc in tool_configs.values())
                 config_types = [tc.get("type") for tc in tool_configs.values()]
             else:
-                has_search_tool = any(
-                    tc.get("type") == "corpora_search" for tc in tool_configs
-                )
+                has_search_tool = any(tc.get("type") == "corpora_search" for tc in tool_configs)
                 config_types = [tc.get("type") for tc in tool_configs]
-            assert has_search_tool, \
-                f"Agent should have corpora_search tool, got: {config_types}"
+            assert has_search_tool, f"Agent should have corpora_search tool, got: {config_types}"
         finally:
             try:
                 client.delete_agent(agent_key)
@@ -74,12 +70,14 @@ class TestAgentCorporaSearch:
             session_key = session_resp.data.get("key")
             wait_for(
                 lambda: client.get_agent_session(agent_key, session_key).success,
-                timeout=10, interval=0.5,
+                timeout=10,
+                interval=0.5,
                 description="session available",
             )
 
             msg_resp = client.execute_agent(
-                agent_key, "What is vector search and how does it work?",
+                agent_key,
+                "What is vector search and how does it work?",
                 session_id=session_key,
             )
             assert msg_resp.success, f"Agent execution failed: {msg_resp.status_code} - {msg_resp.data}"

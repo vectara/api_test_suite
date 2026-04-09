@@ -30,6 +30,4 @@ class TestQueryHistoryFilters:
         limited_resp = client.list_query_histories(limit=2)
         assert limited_resp.success
         limited_entries = limited_resp.data.get("queries", [])
-        assert len(limited_entries) <= 2, \
-            f"Limit=2 should return at most 2 entries, got {len(limited_entries)}"
-
+        assert len(limited_entries) <= 2, f"Limit=2 should return at most 2 entries, got {len(limited_entries)}"

@@ -26,8 +26,7 @@ class TestChatValidation:
             },
         )
 
-        assert response.status_code == 400, \
-            f"Expected 400 for missing corpora, got {response.status_code} - {response.data}"
+        assert response.status_code == 400, f"Expected 400 for missing corpora, got {response.status_code} - {response.data}"
 
     def test_chat_response_field_completeness(self, client, seeded_shared_corpus):
         """Create a chat and verify chat_id, turn_id, answer, and search_results are present."""
@@ -43,12 +42,9 @@ class TestChatValidation:
 
         chat_id = response.data.get("chat_id")
         assert chat_id is not None, f"Response missing chat_id: {response.data}"
-        assert response.data.get("turn_id") is not None, \
-            f"Response missing turn_id: {response.data}"
-        assert response.data.get("answer") is not None, \
-            f"Response missing answer: {response.data}"
-        assert response.data.get("search_results") is not None, \
-            f"Response missing search_results: {response.data}"
+        assert response.data.get("turn_id") is not None, f"Response missing turn_id: {response.data}"
+        assert response.data.get("answer") is not None, f"Response missing answer: {response.data}"
+        assert response.data.get("search_results") is not None, f"Response missing search_results: {response.data}"
 
         if chat_id:
             try:
@@ -73,8 +69,7 @@ class TestChatEdgeCases:
         if not response.success and "rephraser" in str(response.data).lower():
             pytest.skip("Chat rephraser not configured on this instance")
 
-        assert response.success, \
-            f"5000 char query should succeed, got: {response.status_code} - {response.data}"
+        assert response.success, f"5000 char query should succeed, got: {response.status_code} - {response.data}"
 
         chat_id = response.data.get("chat_id")
         if chat_id:
@@ -95,10 +90,8 @@ class TestChatEdgeCases:
         if not response.success and "rephraser" in str(response.data).lower():
             pytest.skip("Chat rephraser not configured on this instance")
 
-        assert not response.success, \
-            f"5001 char query should fail, got: {response.status_code} - {response.data}"
-        assert response.status_code in (400, 413, 422), \
-            f"Expected 400/413/422 for oversized query, got {response.status_code}"
+        assert not response.success, f"5001 char query should fail, got: {response.status_code} - {response.data}"
+        assert response.status_code in (400, 413, 422), f"Expected 400/413/422 for oversized query, got {response.status_code}"
 
         chat_id = response.data.get("chat_id") if isinstance(response.data, dict) else None
         if chat_id:

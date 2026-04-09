@@ -5,6 +5,7 @@ Tests for app client create, read, update, and delete operations.
 """
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -49,10 +50,7 @@ class TestAppClientLifecycle:
         client_id = create_resp.data.get("id")
         try:
             wait_for(
-                lambda: any(
-                    c.get("id") == client_id
-                    for c in client.list_app_clients().data.get("app_clients", [])
-                ),
+                lambda: any(c.get("id") == client_id for c in client.list_app_clients().data.get("app_clients", [])),
                 timeout=10,
                 interval=1,
                 description="app client to appear in listing",
@@ -105,8 +103,7 @@ class TestAppClientLifecycle:
 
             get_resp = client.get_app_client(client_id)
             assert get_resp.success
-            assert get_resp.data.get("description") == new_desc, \
-                f"Description not persisted: {get_resp.data.get('description')!r}"
+            assert get_resp.data.get("description") == new_desc, f"Description not persisted: {get_resp.data.get('description')!r}"
         finally:
             if client_id:
                 try:
@@ -127,5 +124,4 @@ class TestAppClientLifecycle:
         assert delete_resp.success, f"Delete app client failed: {delete_resp.status_code}"
 
         get_resp = client.get_app_client(client_id)
-        assert get_resp.status_code == 404, \
-            f"Deleted app client should return 404, got {get_resp.status_code}"
+        assert get_resp.status_code == 404, f"Deleted app client should return 404, got {get_resp.status_code}"

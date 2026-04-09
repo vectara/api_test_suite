@@ -8,10 +8,9 @@ and PDF uploads with table extraction configuration.
 import os
 import tempfile
 import uuid
+from pathlib import Path
 
 import pytest
-
-from pathlib import Path
 
 from utils.waiters import wait_for
 
@@ -43,7 +42,8 @@ class TestFileUpload:
 
             wait_for(
                 lambda: client.get_document(shared_corpus, doc_id).success,
-                timeout=15, interval=1,
+                timeout=15,
+                interval=1,
                 description="uploaded file to appear as document",
             )
         finally:
@@ -107,6 +107,7 @@ class TestFileUpload:
                 # Load expected table structure
                 with open(expected_path) as f:
                     import json
+
                     expected = json.load(f)
 
                 # Retrieve and validate

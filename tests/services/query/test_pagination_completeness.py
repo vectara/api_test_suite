@@ -7,6 +7,7 @@ Tests that verify pagination returns all items without duplicates.
 import uuid
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -24,7 +25,8 @@ class TestPaginationCompleteness:
         try:
             wait_for(
                 lambda: client.get_corpus(corpus_key).success,
-                timeout=10, interval=1,
+                timeout=10,
+                interval=1,
                 description="corpus available",
             )
 
@@ -35,10 +37,9 @@ class TestPaginationCompleteness:
                 assert resp.success, f"Index {doc_id} failed: {resp.status_code}"
 
             wait_for(
-                lambda: len(
-                    client.list_documents(corpus_key, limit=100).data.get("documents", [])
-                ) >= num_docs,
-                timeout=30, interval=2,
+                lambda: len(client.list_documents(corpus_key, limit=100).data.get("documents", [])) >= num_docs,
+                timeout=30,
+                interval=2,
                 description=f"all {num_docs} documents indexed",
             )
 
@@ -58,10 +59,8 @@ class TestPaginationCompleteness:
                 if not page_key:
                     break
 
-            assert len(all_ids) == len(set(all_ids)), \
-                f"Duplicate document IDs found: {[x for x in all_ids if all_ids.count(x) > 1]}"
-            assert len(all_ids) >= num_docs, \
-                f"Expected at least {num_docs} docs, got {len(all_ids)}"
+            assert len(all_ids) == len(set(all_ids)), f"Duplicate document IDs found: {[x for x in all_ids if all_ids.count(x) > 1]}"
+            assert len(all_ids) >= num_docs, f"Expected at least {num_docs} docs, got {len(all_ids)}"
         finally:
             try:
                 client.delete_corpus(corpus_key)
@@ -86,7 +85,8 @@ class TestPaginationCompleteness:
             for key in created:
                 wait_for(
                     lambda k=key: client.get_corpus(k).success,
-                    timeout=10, interval=1,
+                    timeout=10,
+                    interval=1,
                     description=f"corpus {key} available",
                 )
 

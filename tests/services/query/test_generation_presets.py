@@ -45,7 +45,5 @@ class TestGenerationPresets:
             query_text="artificial intelligence",
             summarizer=preset_name,
         )
-        assert query_resp.success, \
-            f"Query with preset failed: {query_resp.status_code} - {query_resp.data}"
-        assert query_resp.data.get("summary") is not None or query_resp.data.get("generation") is not None, \
-            "Expected summary/generation in response"
+        assert query_resp.success, f"Query with preset failed: {query_resp.status_code} - {query_resp.data}"
+        assert query_resp.data.get("summary") is not None or query_resp.data.get("generation") is not None, "Expected summary/generation in response"

@@ -5,6 +5,7 @@ Tests for Server-Sent Events (SSE) streaming query responses.
 """
 
 import pytest
+
 from utils.waiters import read_sse_events
 
 
@@ -39,10 +40,7 @@ class TestQueryStreaming:
             events = list(read_sse_events(raw))
             assert len(events) > 0, "Expected at least one SSE event"
 
-            has_content = any(
-                e.get("data") is not None and e.get("data") != ""
-                for e in events
-            )
+            has_content = any(e.get("data") is not None and e.get("data") != "" for e in events)
             assert has_content, f"Expected at least one event with data, got event types: {[e.get('event', '') for e in events]}"
         finally:
             raw.close()

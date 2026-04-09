@@ -7,6 +7,7 @@ Tests for metadata filter expressions in queries.
 import uuid
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -31,7 +32,8 @@ class TestQueryFiltersCore:
         try:
             wait_for(
                 lambda: client.get_corpus(corpus_key).success,
-                timeout=10, interval=1,
+                timeout=10,
+                interval=1,
                 description="corpus to be available",
             )
 
@@ -46,17 +48,21 @@ class TestQueryFiltersCore:
 
             wait_for(
                 lambda: client.get_document(corpus_key, doc_id).success,
-                timeout=15, interval=1,
+                timeout=15,
+                interval=1,
                 description="document to be indexed",
             )
 
-            query_resp = client.post("/v2/query", data={
-                "query": "artificial intelligence",
-                "search": {
-                    "corpora": [{"corpus_key": corpus_key, "metadata_filter": "part.topic = 'ai'"}],
-                    "limit": 10,
+            query_resp = client.post(
+                "/v2/query",
+                data={
+                    "query": "artificial intelligence",
+                    "search": {
+                        "corpora": [{"corpus_key": corpus_key, "metadata_filter": "part.topic = 'ai'"}],
+                        "limit": 10,
+                    },
                 },
-            })
+            )
             assert query_resp.success, f"Query failed: {query_resp.status_code} - {query_resp.data}"
             results = query_resp.data.get("search_results", [])
             assert len(results) > 0, "Expected at least one result for valid filter"
@@ -80,7 +86,8 @@ class TestQueryFiltersCore:
         try:
             wait_for(
                 lambda: client.get_corpus(corpus_key).success,
-                timeout=10, interval=1,
+                timeout=10,
+                interval=1,
                 description="corpus to be available",
             )
 
@@ -106,13 +113,15 @@ class TestQueryFilterErrors:
 
     def test_query_with_invalid_filter_returns_400(self, seeded_corpus, client):
         """Test that an invalid filter expression returns 400."""
-        query_resp = client.post("/v2/query", data={
-            "query": "test",
-            "search": {
-                "corpora": [{"corpus_key": seeded_corpus, "metadata_filter": "part.nonexistent_field = 'value'"}],
-                "limit": 10,
+        query_resp = client.post(
+            "/v2/query",
+            data={
+                "query": "test",
+                "search": {
+                    "corpora": [{"corpus_key": seeded_corpus, "metadata_filter": "part.nonexistent_field = 'value'"}],
+                    "limit": 10,
+                },
             },
-        })
+        )
         assert not query_resp.success, "Invalid filter should fail"
-        assert query_resp.status_code == 400, \
-            f"Expected 400 for invalid filter, got {query_resp.status_code}"
+        assert query_resp.status_code == 400, f"Expected 400 for invalid filter, got {query_resp.status_code}"

@@ -7,6 +7,7 @@ Tests for document parts listing, bulk delete, and special character handling.
 import uuid
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -26,14 +27,14 @@ class TestDocumentOperations:
 
         wait_for(
             lambda: client.get_document(test_corpus, doc_id).success,
-            timeout=15, interval=1,
+            timeout=15,
+            interval=1,
             description="document to be indexed",
         )
 
         get_resp = client.get_document(test_corpus, doc_id)
         assert get_resp.success, f"GET document failed: {get_resp.status_code} - {get_resp.data}"
-        assert get_resp.data.get("id") == doc_id, \
-            f"Document id mismatch: expected {doc_id}, got {get_resp.data.get('id')}"
+        assert get_resp.data.get("id") == doc_id, f"Document id mismatch: expected {doc_id}, got {get_resp.data.get('id')}"
 
     def test_bulk_delete_documents(self, client, test_corpus, unique_id):
         """Test bulk deleting documents by ID."""
@@ -44,7 +45,8 @@ class TestDocumentOperations:
 
         wait_for(
             lambda: all(client.get_document(test_corpus, d).success for d in doc_ids),
-            timeout=20, interval=2,
+            timeout=20,
+            interval=2,
             description="all documents to be indexed",
         )
 
@@ -53,12 +55,12 @@ class TestDocumentOperations:
             document_ids=doc_ids,
             async_mode=False,
         )
-        assert delete_resp.success or delete_resp.status_code == 202, \
-            f"Bulk delete failed: {delete_resp.status_code} - {delete_resp.data}"
+        assert delete_resp.success or delete_resp.status_code == 202, f"Bulk delete failed: {delete_resp.status_code} - {delete_resp.data}"
 
         wait_for(
             lambda: all(client.get_document(test_corpus, d).status_code == 404 for d in doc_ids),
-            timeout=30, interval=2,
+            timeout=30,
+            interval=2,
             description="all documents to be deleted",
         )
 
@@ -75,7 +77,8 @@ class TestDocumentEdgeCases:
 
         wait_for(
             lambda: client.get_document(test_corpus, doc_id).success,
-            timeout=15, interval=1,
+            timeout=15,
+            interval=1,
             description="document to be indexed",
         )
 

@@ -32,8 +32,7 @@ class TestUploadWithMetadata:
                 file_path=temp_path,
                 metadata=metadata,
             )
-            assert response.success, \
-                f"File upload failed: {response.status_code} - {response.data}"
+            assert response.success, f"File upload failed: {response.status_code} - {response.data}"
 
             doc_id = response.data.get("id")
             assert doc_id, f"No document ID in upload response: {response.data}"
@@ -46,14 +45,11 @@ class TestUploadWithMetadata:
             )
 
             doc_response = client.get_document(test_corpus, doc_id)
-            assert doc_response.success, \
-                f"Get document failed: {doc_response.status_code} - {doc_response.data}"
+            assert doc_response.success, f"Get document failed: {doc_response.status_code} - {doc_response.data}"
 
             doc_metadata = doc_response.data.get("metadata", {})
-            assert doc_metadata.get("author") == "test_suite", \
-                f"Expected author='test_suite' in metadata, got: {doc_metadata}"
-            assert doc_metadata.get("category") == "technology", \
-                f"Expected category='technology' in metadata, got: {doc_metadata}"
+            assert doc_metadata.get("author") == "test_suite", f"Expected author='test_suite' in metadata, got: {doc_metadata}"
+            assert doc_metadata.get("category") == "technology", f"Expected category='technology' in metadata, got: {doc_metadata}"
         finally:
             os.unlink(temp_path)
 
@@ -73,8 +69,7 @@ class TestUploadErrors:
                 corpus_key="nonexistent_corpus_xyz123",
                 file_path=temp_path,
             )
-            assert response.status_code == 404, \
-                f"Expected 404 for non-existent corpus, got {response.status_code} - {response.data}"
+            assert response.status_code == 404, f"Expected 404 for non-existent corpus, got {response.status_code} - {response.data}"
         finally:
             os.unlink(temp_path)
 
@@ -85,5 +80,4 @@ class TestUploadErrors:
             data={},
         )
 
-        assert response.status_code in (400, 415, 422), \
-            f"Expected 400/415/422 for upload without file, got {response.status_code} - {response.data}"
+        assert response.status_code in (400, 415, 422), f"Expected 400/415/422 for upload without file, got {response.status_code} - {response.data}"

@@ -8,6 +8,7 @@ Ported from AgentSessionIntegrationTest.java.
 import uuid
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -107,8 +108,7 @@ class TestSessionUpdate:
             assert update_resp.success, f"Update failed: {update_resp.status_code} - {update_resp.data}"
 
             get_resp = client.get_agent_session(shared_agent, session_key)
-            assert get_resp.data.get("description") == new_desc, \
-                f"Description not persisted: {get_resp.data.get('description')}"
+            assert get_resp.data.get("description") == new_desc, f"Description not persisted: {get_resp.data.get('description')}"
         finally:
             try:
                 client.delete_agent_session(shared_agent, session_key)
@@ -180,9 +180,7 @@ class TestSessionUpdate:
 
     def test_update_session_nonexistent(self, client, shared_agent):
         """testUpdateSessionNonexistent — update non-existent returns 404."""
-        resp = client.update_agent_session(
-            shared_agent, f"ase_fake_{uuid.uuid4().hex[:8]}", description="nope"
-        )
+        resp = client.update_agent_session(shared_agent, f"ase_fake_{uuid.uuid4().hex[:8]}", description="nope")
         assert resp.status_code == 404, f"Expected 404, got {resp.status_code}"
 
     def test_update_session_with_special_characters(self, client, shared_agent):
@@ -193,7 +191,8 @@ class TestSessionUpdate:
         session_key = create_resp.data.get("key")
         try:
             update_resp = client.update_agent_session(
-                shared_agent, session_key,
+                shared_agent,
+                session_key,
                 name="Session with emojis \U0001f680\U0001f4a1",
                 description="Description with accents: caf\u00e9, na\u00efve, r\u00e9sum\u00e9",
             )

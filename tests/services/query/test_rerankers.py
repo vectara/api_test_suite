@@ -31,17 +31,20 @@ class TestRerankers:
 
     def test_query_with_mmr_reranker(self, client, seeded_shared_corpus):
         """Test querying with the MMR reranker."""
-        query_resp = client.post("/v2/query", data={
-            "query": "artificial intelligence",
-            "search": {
-                "corpora": [{"corpus_key": seeded_shared_corpus}],
-                "limit": 10,
-                "reranker": {
-                    "type": "mmr",
-                    "diversity_bias": 0.3,
+        query_resp = client.post(
+            "/v2/query",
+            data={
+                "query": "artificial intelligence",
+                "search": {
+                    "corpora": [{"corpus_key": seeded_shared_corpus}],
+                    "limit": 10,
+                    "reranker": {
+                        "type": "mmr",
+                        "diversity_bias": 0.3,
+                    },
                 },
             },
-        })
+        )
         assert query_resp.success, f"Query with MMR reranker failed: {query_resp.status_code} - {query_resp.data}"
         results = query_resp.data.get("search_results", [])
         assert isinstance(results, list)

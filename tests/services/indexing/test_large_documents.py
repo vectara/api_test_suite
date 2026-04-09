@@ -36,8 +36,7 @@ class TestLargeDocuments:
         )
 
         assert response.success, f"Large document indexing failed: {response.status_code} - {response.data}"
-        assert response.data.get("id") is not None, \
-            f"Index response should contain document id, got: {response.data}"
+        assert response.data.get("id") is not None, f"Index response should contain document id, got: {response.data}"
 
     def test_index_multiple_documents(self, client, shared_corpus, unique_id):
         """Test indexing multiple documents sequentially."""

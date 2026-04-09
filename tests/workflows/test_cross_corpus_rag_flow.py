@@ -9,6 +9,7 @@ response includes results from both corpora.
 import uuid
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -37,7 +38,8 @@ class TestCrossCorpusRagFlow:
             for key in [corpus1_key, corpus2_key]:
                 wait_for(
                     lambda k=key: client.get_corpus(k).success,
-                    timeout=10, interval=1,
+                    timeout=10,
+                    interval=1,
                     description=f"corpus {key} available",
                 )
 
@@ -59,10 +61,9 @@ class TestCrossCorpusRagFlow:
 
             for key, docs in [(corpus1_key, medical_docs), (corpus2_key, legal_docs)]:
                 wait_for(
-                    lambda k=key, d=docs: all(
-                        client.get_document(k, f"{did}_{uid}").success for did, _ in d
-                    ),
-                    timeout=20, interval=2,
+                    lambda k=key, d=docs: all(client.get_document(k, f"{did}_{uid}").success for did, _ in d),
+                    timeout=20,
+                    interval=2,
                     description=f"documents indexed in {key}",
                 )
 
@@ -72,30 +73,31 @@ class TestCrossCorpusRagFlow:
             if client.llm_name:
                 generation["model_parameters"] = {"llm_name": client.llm_name}
 
-            query_resp = client.post("/v2/query", data={
-                "query": "important topics in modern society",
-                "search": {
-                    "corpora": [
-                        {"corpus_key": corpus1_key},
-                        {"corpus_key": corpus2_key},
-                    ],
-                    "limit": 10,
+            query_resp = client.post(
+                "/v2/query",
+                data={
+                    "query": "important topics in modern society",
+                    "search": {
+                        "corpora": [
+                            {"corpus_key": corpus1_key},
+                            {"corpus_key": corpus2_key},
+                        ],
+                        "limit": 10,
+                    },
+                    "generation": generation,
                 },
-                "generation": generation,
-            })
+            )
             assert query_resp.success, f"RAG query failed: {query_resp.status_code} - {query_resp.data}"
 
             results = query_resp.data.get("search_results", [])
             assert len(results) > 0, "Expected search results from cross-corpus RAG"
 
             result_corpus_keys = {r.get("corpus_key") for r in results}
-            assert corpus1_key in result_corpus_keys or corpus2_key in result_corpus_keys, \
-                f"Expected results from at least one test corpus, got keys: {result_corpus_keys}"
+            assert (
+                corpus1_key in result_corpus_keys or corpus2_key in result_corpus_keys
+            ), f"Expected results from at least one test corpus, got keys: {result_corpus_keys}"
 
-            has_summary = (
-                query_resp.data.get("summary") is not None
-                or query_resp.data.get("generation") is not None
-            )
+            has_summary = query_resp.data.get("summary") is not None or query_resp.data.get("generation") is not None
             if has_summary:
                 summary_text = query_resp.data.get("summary", "") or ""
                 assert len(summary_text) > 0, "Summary should be non-empty"

@@ -5,7 +5,9 @@ and RAG summarization, then cleans up.
 """
 
 import uuid
+
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -28,16 +30,29 @@ class TestIndexQueryFlow:
         try:
             wait_for(
                 lambda: client.get_corpus(actual_key).success,
-                timeout=10, interval=1,
+                timeout=10,
+                interval=1,
                 description="workflow corpus to become queryable",
             )
 
             # Step 2: Index documents
             doc_ids = []
             docs = [
-                {"id": f"wf_doc_{uuid.uuid4().hex[:8]}", "text": "Machine learning enables computers to learn from data without explicit programming.", "metadata": {"topic": "ml"}},
-                {"id": f"wf_doc_{uuid.uuid4().hex[:8]}", "text": "Neural networks are inspired by biological brain structures and excel at pattern recognition.", "metadata": {"topic": "nn"}},
-                {"id": f"wf_doc_{uuid.uuid4().hex[:8]}", "text": "Natural language processing allows machines to understand and generate human language.", "metadata": {"topic": "nlp"}},
+                {
+                    "id": f"wf_doc_{uuid.uuid4().hex[:8]}",
+                    "text": "Machine learning enables computers to learn from data without explicit programming.",
+                    "metadata": {"topic": "ml"},
+                },
+                {
+                    "id": f"wf_doc_{uuid.uuid4().hex[:8]}",
+                    "text": "Neural networks are inspired by biological brain structures and excel at pattern recognition.",
+                    "metadata": {"topic": "nn"},
+                },
+                {
+                    "id": f"wf_doc_{uuid.uuid4().hex[:8]}",
+                    "text": "Natural language processing allows machines to understand and generate human language.",
+                    "metadata": {"topic": "nlp"},
+                },
             ]
             for doc in docs:
                 resp = client.index_document(
@@ -52,7 +67,8 @@ class TestIndexQueryFlow:
             # Step 3: Wait for indexing
             wait_for(
                 lambda: len(client.list_documents(actual_key, limit=10).data.get("documents", [])) >= 3,
-                timeout=15, interval=1,
+                timeout=15,
+                interval=1,
                 description="all 3 docs to be indexed",
             )
 
@@ -68,9 +84,9 @@ class TestIndexQueryFlow:
 
             # Verify top result relates to indexed content
             top_text = results[0].get("text", "").lower()
-            assert any(term in top_text for term in ["learn", "data", "machine", "neural", "language"]), (
-                f"Top result doesn't relate to indexed docs: {top_text[:200]}"
-            )
+            assert any(
+                term in top_text for term in ["learn", "data", "machine", "neural", "language"]
+            ), f"Top result doesn't relate to indexed docs: {top_text[:200]}"
 
             # Step 5: RAG summary
             summary_resp = client.query_with_summary(

@@ -22,8 +22,7 @@ class TestCorpusLifecycle:
             corpus_key=test_corpus,
             enabled=False,
         )
-        assert disable_response.success, \
-            f"Disable corpus failed: {disable_response.status_code} - {disable_response.data}"
+        assert disable_response.success, f"Disable corpus failed: {disable_response.status_code} - {disable_response.data}"
 
         def corpus_is_disabled():
             resp = client.get_corpus(test_corpus)
@@ -35,15 +34,13 @@ class TestCorpusLifecycle:
 
         get_response = client.get_corpus(test_corpus)
         assert get_response.success, f"Get corpus failed: {get_response.status_code}"
-        assert get_response.data.get("enabled") is False, \
-            f"Expected enabled=False, got: {get_response.data.get('enabled')}"
+        assert get_response.data.get("enabled") is False, f"Expected enabled=False, got: {get_response.data.get('enabled')}"
 
         enable_response = client.update_corpus(
             corpus_key=test_corpus,
             enabled=True,
         )
-        assert enable_response.success, \
-            f"Re-enable corpus failed: {enable_response.status_code} - {enable_response.data}"
+        assert enable_response.success, f"Re-enable corpus failed: {enable_response.status_code} - {enable_response.data}"
 
         def corpus_is_enabled():
             resp = client.get_corpus(test_corpus)
@@ -71,27 +68,20 @@ class TestCorpusLifecycle:
             ],
         )
 
-        assert response.success, \
-            f"Replace filter attributes failed: {response.status_code} - {response.data}"
-        assert response.data.get("job_id") is not None, \
-            f"Expected job_id in response, got: {response.data}"
+        assert response.success, f"Replace filter attributes failed: {response.status_code} - {response.data}"
+        assert response.data.get("job_id") is not None, f"Expected job_id in response, got: {response.data}"
 
     def test_compute_corpus_size(self, client, seeded_corpus):
         """Compute size of a seeded corpus and verify fields are present and > 0."""
         response = client.compute_corpus_size(seeded_corpus)
 
-        assert response.success, \
-            f"Compute size failed: {response.status_code} - {response.data}"
+        assert response.success, f"Compute size failed: {response.status_code} - {response.data}"
 
         size_data = response.data
-        assert size_data.get("used_docs") is not None, \
-            f"Expected used_docs in response, got: {size_data}"
-        assert size_data["used_docs"] > 0, \
-            f"Expected used_docs > 0, got: {size_data['used_docs']}"
-        assert size_data.get("used_parts") is not None, \
-            f"Expected used_parts in response, got: {size_data}"
-        assert size_data["used_parts"] > 0, \
-            f"Expected used_parts > 0, got: {size_data['used_parts']}"
+        assert size_data.get("used_docs") is not None, f"Expected used_docs in response, got: {size_data}"
+        assert size_data["used_docs"] > 0, f"Expected used_docs > 0, got: {size_data['used_docs']}"
+        assert size_data.get("used_parts") is not None, f"Expected used_parts in response, got: {size_data}"
+        assert size_data["used_parts"] > 0, f"Expected used_parts > 0, got: {size_data['used_parts']}"
 
     def test_reset_corpus(self, client, seeded_corpus):
         """Reset a seeded corpus and verify all documents are gone."""
@@ -101,8 +91,7 @@ class TestCorpusLifecycle:
         assert before_count > 0, "Seeded corpus should have documents before reset"
 
         reset_response = client.reset_corpus(seeded_corpus)
-        assert reset_response.success, \
-            f"Reset corpus failed: {reset_response.status_code} - {reset_response.data}"
+        assert reset_response.success, f"Reset corpus failed: {reset_response.status_code} - {reset_response.data}"
 
         def documents_are_gone():
             resp = client.list_documents(seeded_corpus, limit=100)
@@ -114,5 +103,4 @@ class TestCorpusLifecycle:
 
         docs_after = client.list_documents(seeded_corpus, limit=100)
         assert docs_after.success, f"List docs after reset failed: {docs_after.status_code}"
-        assert len(docs_after.data.get("documents", [])) == 0, \
-            f"Expected 0 documents after reset, got: {len(docs_after.data.get('documents', []))}"
+        assert len(docs_after.data.get("documents", [])) == 0, f"Expected 0 documents after reset, got: {len(docs_after.data.get('documents', []))}"

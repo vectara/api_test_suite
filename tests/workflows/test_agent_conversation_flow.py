@@ -5,7 +5,9 @@ has a multi-turn conversation, and verifies context is maintained.
 """
 
 import uuid
+
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -30,15 +32,24 @@ class TestAgentConversationFlow:
         try:
             wait_for(
                 lambda: client.get_corpus(actual_corpus_key).success,
-                timeout=10, interval=1,
+                timeout=10,
+                interval=1,
                 description="agent workflow corpus",
             )
 
             # Seed documents
             doc_ids = []
             docs = [
-                {"id": f"awf_{uuid.uuid4().hex[:8]}", "text": "Vectara provides semantic search and RAG for enterprise applications.", "metadata": {"topic": "overview"}},
-                {"id": f"awf_{uuid.uuid4().hex[:8]}", "text": "Agents maintain context across conversation turns for natural follow-up questions.", "metadata": {"topic": "agents"}},
+                {
+                    "id": f"awf_{uuid.uuid4().hex[:8]}",
+                    "text": "Vectara provides semantic search and RAG for enterprise applications.",
+                    "metadata": {"topic": "overview"},
+                },
+                {
+                    "id": f"awf_{uuid.uuid4().hex[:8]}",
+                    "text": "Agents maintain context across conversation turns for natural follow-up questions.",
+                    "metadata": {"topic": "agents"},
+                },
             ]
             for doc in docs:
                 resp = client.index_document(corpus_key=actual_corpus_key, document_id=doc["id"], text=doc["text"], metadata=doc["metadata"])
@@ -47,7 +58,8 @@ class TestAgentConversationFlow:
 
             wait_for(
                 lambda: client.list_documents(actual_corpus_key, limit=5).data.get("documents", []),
-                timeout=15, interval=1,
+                timeout=15,
+                interval=1,
                 description="agent workflow docs indexed",
             )
 

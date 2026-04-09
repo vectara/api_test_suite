@@ -7,6 +7,7 @@ Tests for tool enable/disable operations.
 import uuid
 
 import pytest
+
 from utils.waiters import wait_for
 
 
@@ -30,13 +31,11 @@ class TestToolLifecycle:
         try:
             disable_resp = client.update_tool(tool_id, type="lambda", enabled=False)
             assert disable_resp.success, f"Disable tool failed: {disable_resp.status_code} - {disable_resp.data}"
-            assert disable_resp.data.get("enabled") is False, \
-                f"Expected enabled=False, got: {disable_resp.data.get('enabled')}"
+            assert disable_resp.data.get("enabled") is False, f"Expected enabled=False, got: {disable_resp.data.get('enabled')}"
 
             enable_resp = client.update_tool(tool_id, type="lambda", enabled=True)
             assert enable_resp.success, f"Enable tool failed: {enable_resp.status_code} - {enable_resp.data}"
-            assert enable_resp.data.get("enabled") is True, \
-                f"Expected enabled=True, got: {enable_resp.data.get('enabled')}"
+            assert enable_resp.data.get("enabled") is True, f"Expected enabled=True, got: {enable_resp.data.get('enabled')}"
         finally:
             if tool_id:
                 try:
