@@ -11,7 +11,7 @@
 
 ## Environment Variables
 - `VECTARA_API_KEY` — required, Personal API key
-- `VECTARA_BASE_URL` — defaults to `https://api.vectara.io`, use `https://api.vectara.dev` for staging
+- `VECTARA_BASE_URL` — defaults to `https://api.vectara.io`
 
 ## Project Structure
 - `tests/services/<service>/` — test files organized by API service (auth, corpus, indexing, query, chat, agents)

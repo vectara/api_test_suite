@@ -19,7 +19,7 @@ pip install -r requirements.txt
 
 ```bash
 export VECTARA_API_KEY=your_api_key_here
-export VECTARA_BASE_URL=https://api.vectara.io  # or https://api.vectara.dev for staging
+export VECTARA_BASE_URL=https://api.vectara.io
 python run_tests.py --profile sanity
 ```
 
@@ -142,7 +142,7 @@ Workflow tests use `@pytest.mark.workflow`.
 ### "API authentication failed"
 - Verify your API key is correct and is a Personal API key
 - Check if the key has expired or been disabled
-- For staging: use `VECTARA_BASE_URL=https://api.vectara.dev`
+- For staging: set `VECTARA_BASE_URL` to your staging endpoint
 
 ### "Connection error"
 - Verify the base URL is correct
