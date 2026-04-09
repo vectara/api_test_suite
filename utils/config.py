@@ -64,9 +64,6 @@ class Config:
         errors = []
 
         if not self.api_key:
-            errors.append(
-                "API key is required. Set VECTARA_API_KEY environment variable "
-                "or provide via --api-key"
-            )
+            errors.append("API key is required. Set VECTARA_API_KEY environment variable " "or provide via --api-key")
 
         return len(errors) == 0, errors

@@ -13,27 +13,43 @@ Usage:
     export VECTARA_API_KEY=your_key
     python run_tests.py
 
-    # Run specific test categories
-    python run_tests.py --tests auth,corpus
+    # Run specific services
+    python run_tests.py --service corpus,auth
+
+    # Run with a depth profile
+    python run_tests.py --profile core
 
     # Generate HTML report
     python run_tests.py --html-report
 """
 
-import os
-import sys
 import argparse
+import os
 import subprocess
-from pathlib import Path
+import sys
 from datetime import datetime
+from pathlib import Path
 
 try:
     from rich.console import Console
     from rich.panel import Panel
     from rich.table import Table
+
     RICH_AVAILABLE = True
 except ImportError:
     RICH_AVAILABLE = False
+
+
+# Profile-to-marker mapping for depth-based test selection
+PROFILE_MARKERS = {
+    "sanity": "sanity",
+    "core": "sanity or core",
+    "regression": "sanity or core or regression",
+    "full": None,  # no marker filter
+}
+
+# Available services (auto-discovered from tests/services/ subdirectories)
+AVAILABLE_SERVICES = ["agents", "auth", "chat", "corpus", "indexing", "llm", "pipelines", "query", "tools", "users"]
 
 
 def get_console():
@@ -46,11 +62,12 @@ def get_console():
 def print_header(console):
     """Print welcome header."""
     if console:
-        console.print(Panel.fit(
-            "[bold blue]Vectara API Test Suite[/bold blue]\n"
-            "[dim]Comprehensive API validation for upgrade verification[/dim]",
-            border_style="blue",
-        ))
+        console.print(
+            Panel.fit(
+                "[bold blue]Vectara API Test Suite[/bold blue]\n" "[dim]Comprehensive API validation for upgrade verification[/dim]",
+                border_style="blue",
+            )
+        )
     else:
         print("=" * 50)
         print("Vectara API Test Suite")
@@ -70,84 +87,140 @@ def validate_api_key(api_key):
     return errors
 
 
-def build_pytest_args(args, test_selection):
-    """Build pytest command-line arguments."""
-    pytest_args = [
+def resolve_services(args):
+    """Resolve the list of services to run from --service or deprecated --tests."""
+    raw = args.service or args.tests
+    if raw:
+        return [s.strip().lower() for s in raw.split(",")]
+    return []
+
+
+def build_pytest_args(args, services, profile):
+    """Build pytest command-line arguments.
+
+    Returns a list of arg-lists (one per phase) when parallel execution splits
+    into parallel + sequential phases, otherwise a single-element list.
+    """
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    # --- common flags shared by every phase ---
+    common = [
         "-v",  # Verbose output
         "--tb=short",  # Shorter tracebacks
     ]
 
-    # Add HTML report if requested
-    if args.html_report:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        report_path = Path("reports") / f"test_report_{timestamp}.html"
-        report_path.parent.mkdir(exist_ok=True)
-        pytest_args.extend(["--html", str(report_path), "--self-contained-html"])
-
-    # Add JSON report for CI/CD
-    if args.json_report:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        json_path = Path("reports") / f"test_results_{timestamp}.json"
-        json_path.parent.mkdir(exist_ok=True)
-        pytest_args.extend(["--json-report", f"--json-report-file={json_path}"])
-
-    # Add parallel execution if requested
-    if args.parallel:
-        pytest_args.extend(["-n", str(args.parallel)])
-
-    # Add test selection
-    if "all" not in test_selection:
-        test_files = []
-        test_mapping = {
-            "auth": "tests/test_01_authentication.py",
-            "corpus": "tests/test_02_corpus_management.py",
-            "indexing": "tests/test_03_indexing.py",
-            "query": "tests/test_04_query_search.py",
-            "agents": "tests/test_05_agents.py",
-        }
-        for sel in test_selection:
-            if sel in test_mapping:
-                test_files.append(test_mapping[sel])
-
-        if test_files:
-            pytest_args.extend(test_files)
-        else:
-            pytest_args.append("tests/")
-    else:
-        pytest_args.append("tests/")
-
-    # Add API key via command-line option
+    # Pass-through options
     if args.api_key:
-        pytest_args.extend(["--api-key", args.api_key])
+        common.extend(["--api-key", args.api_key])
     if args.base_url:
-        pytest_args.extend(["--base-url", args.base_url])
+        common.extend(["--base-url", args.base_url])
     if args.llm_name:
-        pytest_args.extend(["--llm-name", args.llm_name])
+        common.extend(["--llm-name", args.llm_name])
     if args.generation_preset:
-        pytest_args.extend(["--generation-preset", args.generation_preset])
+        common.extend(["--generation-preset", args.generation_preset])
 
-    return pytest_args
+    # --- marker expression from profile ---
+    marker_expr = PROFILE_MARKERS.get(profile)
+
+    # --- target directories ---
+    if services:
+        targets = [f"tests/services/{svc}/" for svc in services]
+    elif profile == "full":
+        targets = ["tests/"]
+    else:
+        targets = ["tests/services/"]
+
+    # Build a descriptive label for report filenames
+    if services:
+        report_label = "_".join(services)
+    else:
+        report_label = profile
+
+    def add_report_flags(phase_args, phase_suffix=""):
+        """Add report flags with descriptive filenames."""
+        name = f"{report_label}_{phase_suffix}" if phase_suffix else report_label
+        if args.html_report:
+            report_path = Path("reports") / f"test_report_{timestamp}_{name}.html"
+            report_path.parent.mkdir(exist_ok=True)
+            phase_args.extend(["--html", str(report_path), "--self-contained-html"])
+        if args.json_report:
+            json_path = Path("reports") / f"test_results_{timestamp}_{name}.json"
+            json_path.parent.mkdir(exist_ok=True)
+            phase_args.extend(["--json-report", f"--json-report-file={json_path}"])
+
+    # --- build phase(s) ---
+    if args.parallel:
+        # Phase 1: parallel run (excluding serial-marked tests)
+        phase1 = list(common)
+        phase1.extend(["-n", str(args.parallel)])
+        if marker_expr:
+            phase1.extend(["-m", f"({marker_expr}) and not serial"])
+        else:
+            phase1.extend(["-m", "not serial"])
+        phase1.extend(targets)
+
+        phases = [phase1]
+
+        # Phase 2: sequential workflow tests (only when profile is full)
+        if profile == "full":
+            phase2 = list(common)
+            if marker_expr:
+                phase2.extend(["-m", marker_expr])
+            phase2.append("tests/workflows/")
+            phases.append(phase2)
+
+        # Add report flags — one file per phase if multiple, no suffix if single
+        if len(phases) == 1:
+            add_report_flags(phases[0])
+        else:
+            add_report_flags(phases[0], "services")
+            add_report_flags(phases[1], "workflows")
+
+        return phases
+    else:
+        # Single invocation (no parallelism)
+        single = list(common)
+        if marker_expr:
+            single.extend(["-m", marker_expr])
+        single.extend(targets)
+        add_report_flags(single)
+        return [single]
 
 
-def run_tests(pytest_args, console):
-    """Execute pytest with the given arguments."""
+def run_tests(phases, console):
+    """Execute pytest for each phase and return the first non-zero exit code (or 0)."""
     if console:
         console.print("\n[bold green]Starting test execution...[/bold green]\n")
     else:
         print("\nStarting test execution...\n")
 
-    # Run pytest
-    cmd = [sys.executable, "-m", "pytest"] + pytest_args
+    for idx, pytest_args in enumerate(phases):
+        if len(phases) > 1:
+            label = "Phase 1 (parallel)" if idx == 0 else "Phase 2 (sequential workflows)"
+            if console:
+                console.print(f"\n[bold cyan]{label}[/bold cyan]")
+            else:
+                print(f"\n{label}")
 
-    try:
-        result = subprocess.run(cmd, cwd=Path(__file__).parent)
-        return result.returncode
-    except KeyboardInterrupt:
+        cmd = [sys.executable, "-m", "pytest"] + pytest_args
+
         if console:
-            console.print("\n[yellow]Test execution cancelled by user.[/yellow]")
+            console.print(f"[dim]Running: pytest {' '.join(pytest_args)}[/dim]\n")
         else:
-            print("\nTest execution cancelled by user.")
-        return 130
+            print(f"Running: pytest {' '.join(pytest_args)}\n")
+
+        try:
+            result = subprocess.run(cmd, cwd=Path(__file__).parent)
+            if result.returncode != 0:
+                return result.returncode
+        except KeyboardInterrupt:
+            if console:
+                console.print("\n[yellow]Test execution cancelled by user.[/yellow]")
+            else:
+                print("\nTest execution cancelled by user.")
+            return 130
+
+    return 0
 
 
 def main():
@@ -157,10 +230,13 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python run_tests.py --api-key YOUR_KEY              # With API key
-  python run_tests.py --tests auth,corpus             # Run specific tests
-  python run_tests.py --html-report                   # Generate HTML report
-  python run_tests.py --llm-name mockingbird-2.0      # Specify LLM model
+  python run_tests.py --api-key YOUR_KEY                       # With API key
+  python run_tests.py --profile sanity                         # Run sanity tests only
+  python run_tests.py --profile core --service corpus,auth     # Core tests for specific services
+  python run_tests.py --service corpus,query                   # Run specific services (default profile: core)
+  python run_tests.py --profile full -p 4                      # Full run, 4 parallel workers
+  python run_tests.py --html-report                            # Generate HTML report
+  python run_tests.py --llm-name mockingbird-2.0               # Specify LLM model
   python run_tests.py --generation-preset vectara-summary-ext-24-05-med-omni
 
 Environment Variables:
@@ -173,11 +249,13 @@ Environment Variables:
 
     # Credential arguments
     parser.add_argument(
-        "--api-key", "-k",
+        "--api-key",
+        "-k",
         help="Vectara Personal API key (or set VECTARA_API_KEY env var)",
     )
     parser.add_argument(
-        "--base-url", "-u",
+        "--base-url",
+        "-u",
         help="Vectara API base URL for on-premise (default: https://api.vectara.io)",
     )
 
@@ -191,10 +269,22 @@ Environment Variables:
         help="Generation preset name (or set VECTARA_GENERATION_PRESET env var)",
     )
 
-    # Test selection
+    # Profile and service selection
     parser.add_argument(
-        "--tests", "-t",
-        help="Comma-separated list of test categories: auth,corpus,indexing,query,agents,all",
+        "--profile",
+        choices=["sanity", "core", "regression", "full"],
+        default="core",
+        help="Test depth profile (default: core)",
+    )
+    parser.add_argument(
+        "--service",
+        "-s",
+        help="Comma-separated list of services to test: " + ",".join(AVAILABLE_SERVICES),
+    )
+    parser.add_argument(
+        "--tests",
+        "-t",
+        help="(Deprecated, use --service) Comma-separated list of services to test",
     )
 
     # Report options
@@ -211,7 +301,8 @@ Environment Variables:
 
     # Execution options
     parser.add_argument(
-        "--parallel", "-p",
+        "--parallel",
+        "-p",
         type=int,
         metavar="N",
         help="Run tests in parallel with N workers",
@@ -221,6 +312,13 @@ Environment Variables:
     console = get_console()
 
     print_header(console)
+
+    # Warn about deprecated --tests flag
+    if args.tests and not args.service:
+        if console:
+            console.print("[yellow]Warning: --tests is deprecated, use --service instead.[/yellow]")
+        else:
+            print("Warning: --tests is deprecated, use --service instead.")
 
     # Determine API key from args or environment
     api_key = args.api_key or os.environ.get("VECTARA_API_KEY")
@@ -250,41 +348,42 @@ Environment Variables:
     if base_url:
         os.environ["VECTARA_BASE_URL"] = base_url
 
-    # Get test selection
-    if args.tests:
-        test_selection = [t.strip().lower() for t in args.tests.split(",")]
-    else:
-        test_selection = ["all"]
+    # Resolve services and profile
+    services = resolve_services(args)
+    profile = args.profile
 
-    # Show test categories
+    # Show configuration table
     if console:
-        table = Table(title="Test Categories")
-        table.add_column("Category", style="cyan")
-        table.add_column("Status")
+        table = Table(title="Test Configuration")
+        table.add_column("Setting", style="cyan")
+        table.add_column("Value")
 
-        categories = ["auth", "corpus", "indexing", "query", "agents"]
-        for cat in categories:
-            status = "[green]✓ Selected[/green]" if "all" in test_selection or cat in test_selection else "[dim]Skipped[/dim]"
-            table.add_row(cat, status)
+        table.add_row("Profile", f"[bold]{profile}[/bold]")
+
+        if services:
+            table.add_row("Services", ", ".join(services))
+        else:
+            table.add_row("Services", "[dim]all[/dim]")
+
+        if args.parallel:
+            table.add_row("Parallelism", f"{args.parallel} workers")
+
+        marker = PROFILE_MARKERS.get(profile)
+        table.add_row("Marker filter", marker if marker else "[dim]none (full)[/dim]")
 
         console.print(table)
 
     # Build and run pytest
-    pytest_args = build_pytest_args(args, test_selection)
+    phases = build_pytest_args(args, services, profile)
 
-    if console:
-        console.print(f"\n[dim]Running: pytest {' '.join(pytest_args)}[/dim]\n")
-    else:
-        print(f"\nRunning: pytest {' '.join(pytest_args)}\n")
-
-    exit_code = run_tests(pytest_args, console)
+    exit_code = run_tests(phases, console)
 
     # Summary
     if console:
         if exit_code == 0:
-            console.print("\n[bold green]✔ All tests passed![/bold green]")
+            console.print("\n[bold green]All tests passed![/bold green]")
         else:
-            console.print(f"\n[bold red]✘ Tests failed with exit code {exit_code}[/bold red]")
+            console.print(f"\n[bold red]Tests failed with exit code {exit_code}[/bold red]")
     else:
         if exit_code == 0:
             print("\nAll tests passed!")
