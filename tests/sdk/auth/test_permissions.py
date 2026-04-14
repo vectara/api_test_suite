@@ -9,6 +9,7 @@ import uuid
 
 import pytest
 from vectara import Vectara
+from vectara.environment import VectaraEnvironment
 from vectara.types import (
     CoreDocumentPart,
     CreateDocumentRequest_Core,
@@ -65,7 +66,7 @@ class TestPermissions:
         )
         assert doc is not None, "Index response should not be None"
 
-    def test_api_key_has_query_permission(self, sdk_client, sdk_shared_corpus, unique_id):
+    def test_api_key_has_query_permission(self, sdk_client, sdk_shared_corpus, unique_id, config):
         """Test that a scoped API key with serving role can query."""
         # Create a scoped API key with serving role
         key_resp = sdk_client.api_keys.create(
@@ -74,11 +75,16 @@ class TestPermissions:
             corpus_keys=[sdk_shared_corpus],
         )
         key_id = key_resp.id
-        api_key_str = key_resp.api_key
+        api_key_str = key_resp.secret_key
 
         try:
             # Create a client using the scoped key
-            scoped_client = Vectara(api_key=api_key_str)
+            base_url = config.base_url
+            if base_url and base_url != "https://api.vectara.io":
+                env = VectaraEnvironment(default=base_url, auth=base_url.replace("api.", "auth."))
+                scoped_client = Vectara(api_key=api_key_str, environment=env)
+            else:
+                scoped_client = Vectara(api_key=api_key_str)
 
             # Index a doc first so there's something to query
             doc_id = f"auth_query_perm_{uuid.uuid4().hex[:8]}"
@@ -111,7 +117,7 @@ class TestPermissions:
             except Exception:
                 pass
 
-    def test_api_key_has_index_permission(self, sdk_client, sdk_shared_corpus, unique_id):
+    def test_api_key_has_index_permission(self, sdk_client, sdk_shared_corpus, unique_id, config):
         """Test that a scoped API key with serving_and_indexing role can index."""
         # Create a scoped API key with serving_and_indexing role
         key_resp = sdk_client.api_keys.create(
@@ -120,11 +126,16 @@ class TestPermissions:
             corpus_keys=[sdk_shared_corpus],
         )
         key_id = key_resp.id
-        api_key_str = key_resp.api_key
+        api_key_str = key_resp.secret_key
 
         try:
             # Create a client using the scoped key
-            scoped_client = Vectara(api_key=api_key_str)
+            base_url = config.base_url
+            if base_url and base_url != "https://api.vectara.io":
+                env = VectaraEnvironment(default=base_url, auth=base_url.replace("api.", "auth."))
+                scoped_client = Vectara(api_key=api_key_str, environment=env)
+            else:
+                scoped_client = Vectara(api_key=api_key_str)
 
             doc_id = f"auth_index_perm_{uuid.uuid4().hex[:8]}"
             doc = scoped_client.documents.create(
