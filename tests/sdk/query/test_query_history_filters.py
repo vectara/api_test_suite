@@ -22,21 +22,13 @@ class TestQueryHistoryFilters:
     """Query history filtering and pagination."""
 
     def test_query_history_with_limit(self, sdk_client):
-        """Verify limit parameter restricts per-page result count."""
-        # SDK pager iterates all pages; limit controls page size.
-        # Verify that a smaller limit still returns results and that
-        # a larger limit returns at least as many.
-        small_limit = []
-        for entry in sdk_client.query_history.list(limit=2):
-            small_limit.append(entry)
-            if len(small_limit) >= 5:
-                break
+        """Verify limit parameter restricts first-page result count."""
+        # Use pager.items to get just the first page (respects limit)
+        pager = sdk_client.query_history.list(limit=10)
+        full_count = len(pager.items or [])
+        if full_count < 3:
+            pytest.skip(f"Need at least 3 history entries for limit test, have {full_count}")
 
-        large_limit = []
-        for entry in sdk_client.query_history.list(limit=10):
-            large_limit.append(entry)
-            if len(large_limit) >= 5:
-                break
-
-        assert len(small_limit) > 0, "Query history should return at least 1 entry"
-        assert len(large_limit) > 0, "Query history should return at least 1 entry"
+        limited_pager = sdk_client.query_history.list(limit=2)
+        limited_items = limited_pager.items or []
+        assert len(limited_items) <= 2, f"Limit=2 should return at most 2 entries, got {len(limited_items)}"
