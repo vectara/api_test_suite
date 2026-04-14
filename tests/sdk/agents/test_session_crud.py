@@ -102,6 +102,22 @@ class TestSessionUpdate:
             except Exception:
                 pass
 
+    def test_update_session_name(self, sdk_client, sdk_shared_agent):
+        """testUpdateSessionNameOnly -- update session name and verify persistence."""
+        session = sdk_client.agent_sessions.create(sdk_shared_agent)
+
+        try:
+            new_name = f"Session {uuid.uuid4().hex[:8]}"
+            sdk_client.agent_sessions.update(sdk_shared_agent, session.key, name=new_name)
+
+            retrieved = sdk_client.agent_sessions.get(sdk_shared_agent, session.key)
+            assert retrieved.name == new_name, f"Session name not persisted: {retrieved.name}"
+        finally:
+            try:
+                sdk_client.agent_sessions.delete(sdk_shared_agent, session.key)
+            except Exception:
+                pass
+
     def test_update_session_enabled(self, sdk_client, sdk_shared_agent):
         """testUpdateSessionEnabledOnly -- disable then re-enable."""
         session = sdk_client.agent_sessions.create(sdk_shared_agent)

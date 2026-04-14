@@ -5,6 +5,8 @@ Tests for executing queries against agents, multi-turn conversations,
 and edge cases.
 """
 
+import time
+
 import pytest
 from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 from vectara.core.api_error import ApiError
@@ -80,6 +82,31 @@ class TestAgentExecution:
 
             events = list(sdk_client.agent_events.list(sdk_shared_agent, session_key))
             assert len(events) > 0, "Expected events in multi-turn response"
+        finally:
+            try:
+                sdk_client.agent_sessions.delete(sdk_shared_agent, session_key)
+            except Exception:
+                pass
+
+    def test_execute_agent_response_time(self, sdk_client, sdk_shared_agent):
+        """Test that agent execution completes in acceptable time."""
+        session = sdk_client.agent_sessions.create(sdk_shared_agent)
+        session_key = session.key
+
+        try:
+            start = time.monotonic()
+            response = sdk_client.agent_events.create(
+                sdk_shared_agent,
+                session_key,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "What is semantic search?"}],
+                    stream_response=False,
+                ),
+            )
+            elapsed = time.monotonic() - start
+
+            assert response is not None, "Agent execution should return a response"
+            assert elapsed < 30, f"Agent execution took too long: {elapsed:.1f}s (limit 30s)"
         finally:
             try:
                 sdk_client.agent_sessions.delete(sdk_shared_agent, session_key)
