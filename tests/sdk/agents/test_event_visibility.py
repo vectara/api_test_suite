@@ -72,9 +72,7 @@ class TestEventVisibility:
 
             # Verify hidden from default listing
             visible_events = list(sdk_client.agent_events.list(sdk_shared_agent, session_key))
-            assert len(visible_events) == initial_count - 1, (
-                f"Expected {initial_count - 1} visible events after hide, got {len(visible_events)}"
-            )
+            assert len(visible_events) == initial_count - 1, f"Expected {initial_count - 1} visible events after hide, got {len(visible_events)}"
             visible_ids = {getattr(e, "id", None) for e in visible_events}
             assert event_id not in visible_ids, "Hidden event should not appear in default listing"
 
@@ -84,9 +82,7 @@ class TestEventVisibility:
 
             # Verify reappears
             after_events = list(sdk_client.agent_events.list(sdk_shared_agent, session_key))
-            assert len(after_events) == initial_count, (
-                f"Expected {initial_count} events after unhide, got {len(after_events)}"
-            )
+            assert len(after_events) == initial_count, f"Expected {initial_count} events after unhide, got {len(after_events)}"
         finally:
             try:
                 sdk_client.agent_sessions.delete(sdk_shared_agent, session_key)

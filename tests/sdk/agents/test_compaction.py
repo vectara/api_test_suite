@@ -12,8 +12,9 @@ from vectara.agent_events.types import (
 from vectara.core.api_error import ApiError
 from vectara.types import CompactionConfig
 
-from .conftest import create_agent
 from utils.waiters import wait_for
+
+from .conftest import create_agent
 
 
 def _session_exists(sdk_client, agent_key, session_key):
@@ -212,17 +213,11 @@ class TestManualCompaction:
                 assert compact_response is not None, "Compact should return a response"
 
                 # Verify compaction event exists in the session
-                all_events = list(
-                    sdk_client.agent_events.list(agent.key, session_key, include_hidden=True)
-                )
+                all_events = list(sdk_client.agent_events.list(agent.key, session_key, include_hidden=True))
                 event_types = [str(getattr(e, "type", "")) for e in all_events]
-                assert any(
-                    "compaction" in t for t in event_types
-                ), f"Expected compaction event in session, got types: {event_types}"
+                assert any("compaction" in t for t in event_types), f"Expected compaction event in session, got types: {event_types}"
 
-                assert len(all_events) >= visible_before, (
-                    f"Hidden events should still exist: total={len(all_events)} visible_before={visible_before}"
-                )
+                assert len(all_events) >= visible_before, f"Hidden events should still exist: total={len(all_events)} visible_before={visible_before}"
             finally:
                 try:
                     sdk_client.agent_sessions.delete(agent.key, session_key)
@@ -260,9 +255,7 @@ class TestManualCompaction:
                 events = list(sdk_client.agent_events.list(sdk_shared_agent, session_key))
                 event_types = [str(getattr(e, "type", "")) for e in events]
                 has_error = any("error" in t for t in event_types)
-                assert has_error, (
-                    f"Compact on empty session should produce an error event, got types: {event_types}"
-                )
+                assert has_error, f"Compact on empty session should produce an error event, got types: {event_types}"
             except (ApiError, Exception) as e:
                 # Expected: compaction on empty session should fail
                 pass

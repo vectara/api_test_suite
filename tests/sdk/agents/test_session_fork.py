@@ -108,9 +108,7 @@ class TestSessionForkWithCompaction:
         try:
             forked_events = list(sdk_client.agent_events.list(agent_key, forked_key))
             forked_types = [str(getattr(e, "type", "")) for e in forked_events]
-            assert any(
-                "compaction" in t for t in forked_types
-            ), f"Forked session should contain compaction event, got types: {forked_types}"
+            assert any("compaction" in t for t in forked_types), f"Forked session should contain compaction event, got types: {forked_types}"
         finally:
             try:
                 sdk_client.agent_sessions.delete(agent_key, forked_key)
@@ -139,10 +137,7 @@ class TestSessionForkWithCompaction:
 
         try:
             forked_events = list(sdk_client.agent_events.list(agent_key, forked_key))
-            assert len(forked_events) <= len(events), (
-                f"Forked session should have fewer or equal events: "
-                f"forked={len(forked_events)} source={len(events)}"
-            )
+            assert len(forked_events) <= len(events), f"Forked session should have fewer or equal events: " f"forked={len(forked_events)} source={len(events)}"
         finally:
             try:
                 sdk_client.agent_sessions.delete(agent_key, forked_key)
