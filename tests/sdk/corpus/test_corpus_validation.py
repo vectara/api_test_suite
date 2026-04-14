@@ -5,7 +5,6 @@ Tests for corpus creation input validation using the Vectara Python SDK.
 """
 
 import pytest
-
 from vectara.errors import BadRequestError
 
 

@@ -8,7 +8,6 @@ using the Vectara Python SDK.
 import uuid
 
 import pytest
-
 from vectara.types import CoreDocumentPart, CreateDocumentRequest_Core
 
 from utils.waiters import wait_for
@@ -81,9 +80,7 @@ class TestPaginationCompleteness:
             # Alternative: just use the pager directly to get all docs
             all_ids = [d.id for d in sdk_client.documents.list(corpus_key, limit=100)]
 
-            assert len(all_ids) == len(set(all_ids)), (
-                f"Duplicate document IDs found: {[x for x in all_ids if all_ids.count(x) > 1]}"
-            )
+            assert len(all_ids) == len(set(all_ids)), f"Duplicate document IDs found: {[x for x in all_ids if all_ids.count(x) > 1]}"
             assert len(all_ids) >= num_docs, f"Expected at least {num_docs} docs, got {len(all_ids)}"
         finally:
             try:

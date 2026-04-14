@@ -5,9 +5,8 @@ Core tests for tool listing, creation, update, and deletion.
 """
 
 import pytest
-
-from vectara.types import CreateToolRequest_Lambda, UpdateToolRequest_Lambda
 from vectara.core.api_error import ApiError
+from vectara.types import CreateToolRequest_Lambda, UpdateToolRequest_Lambda
 
 
 @pytest.mark.core

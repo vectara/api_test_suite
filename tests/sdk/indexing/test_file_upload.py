@@ -12,7 +12,6 @@ import uuid
 from pathlib import Path
 
 import pytest
-
 from vectara.types import TableExtractionConfig
 
 from utils.waiters import wait_for
@@ -90,7 +89,10 @@ class TestFileUpload:
                 )
             except Exception as e:
                 err_msg = str(e).lower()
-                if any(kw in err_msg for kw in ["tabular data extraction", "table extraction", "not supported", "not available", "plan does not", "failed to generate summary"]):
+                if any(
+                    kw in err_msg
+                    for kw in ["tabular data extraction", "table extraction", "not supported", "not available", "plan does not", "failed to generate summary"]
+                ):
                     pytest.skip("Table extraction not available or failing in this environment")
                 raise
 

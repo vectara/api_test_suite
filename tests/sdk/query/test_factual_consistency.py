@@ -8,11 +8,10 @@ FCS is enabled by default (OpenAPI spec: default=true) when generation is reques
 """
 
 import pytest
-
 from vectara.types import (
-    SearchCorporaParameters,
-    KeyedSearchCorpus,
     GenerationParameters,
+    KeyedSearchCorpus,
+    SearchCorporaParameters,
 )
 
 from utils.waiters import wait_for
@@ -42,9 +41,7 @@ class TestFactualConsistency:
         )
 
         score = response.factual_consistency_score
-        assert score is not None, (
-            f"Expected factual_consistency_score in response, got summary={response.summary is not None}"
-        )
+        assert score is not None, f"Expected factual_consistency_score in response, got summary={response.summary is not None}"
         assert 0.0 <= score <= 1.0, f"FCS score out of range [0, 1]: {score}"
 
 

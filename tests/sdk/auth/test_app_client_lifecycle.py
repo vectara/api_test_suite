@@ -5,7 +5,6 @@ Tests for app client create, read, update, and delete operations.
 """
 
 import pytest
-
 from vectara.errors import NotFoundError
 from vectara.types import CreateAppClientRequest_ClientCredentials
 
@@ -116,9 +115,7 @@ class TestAppClientLifecycle:
             sdk_client.app_clients.update(client_id, description=new_desc)
 
             retrieved = sdk_client.app_clients.get(client_id)
-            assert retrieved.description == new_desc, (
-                f"Description not persisted: {retrieved.description!r}"
-            )
+            assert retrieved.description == new_desc, f"Description not persisted: {retrieved.description!r}"
         finally:
             if client_id:
                 try:

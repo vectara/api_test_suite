@@ -7,7 +7,6 @@ Tests for session create, get, update, delete operations and error cases.
 import uuid
 
 import pytest
-
 from vectara.errors import NotFoundError
 
 from utils.waiters import wait_for
@@ -96,9 +95,7 @@ class TestSessionUpdate:
             sdk_client.agent_sessions.update(sdk_shared_agent, session.key, description=new_desc)
 
             retrieved = sdk_client.agent_sessions.get(sdk_shared_agent, session.key)
-            assert retrieved.description == new_desc, (
-                f"Description not persisted: {retrieved.description}"
-            )
+            assert retrieved.description == new_desc, f"Description not persisted: {retrieved.description}"
         finally:
             try:
                 sdk_client.agent_sessions.delete(sdk_shared_agent, session.key)

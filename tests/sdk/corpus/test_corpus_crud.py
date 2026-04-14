@@ -9,7 +9,6 @@ import time
 import uuid
 
 import pytest
-
 from vectara.errors import ConflictError, NotFoundError
 
 

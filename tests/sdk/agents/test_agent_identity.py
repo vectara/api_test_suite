@@ -30,8 +30,6 @@ class TestAgentIdentity:
         try:
             sdk_client.agents.update(sdk_shared_agent, description="Updated identity test")
             retrieved = sdk_client.agents.get(sdk_shared_agent)
-            assert retrieved.description == "Updated identity test", (
-                f"Expected updated description, got: {retrieved.description}"
-            )
+            assert retrieved.description == "Updated identity test", f"Expected updated description, got: {retrieved.description}"
         finally:
             sdk_client.agents.update(sdk_shared_agent, description=original_description)

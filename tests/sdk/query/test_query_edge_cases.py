@@ -9,9 +9,8 @@ using the Vectara Python SDK.
 import time
 
 import pytest
-
-from vectara.types import SearchCorporaParameters, KeyedSearchCorpus
-from vectara.errors import NotFoundError, BadRequestError
+from vectara.errors import BadRequestError, NotFoundError
+from vectara.types import KeyedSearchCorpus, SearchCorporaParameters
 
 
 @pytest.mark.regression

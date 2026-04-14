@@ -6,7 +6,6 @@ using the Vectara Python SDK.
 """
 
 import pytest
-
 from vectara.errors import NotFoundError
 from vectara.types import CoreDocumentPart, CreateDocumentRequest_Core
 

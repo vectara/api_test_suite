@@ -7,6 +7,7 @@ Never mutates the bootstrap key -- always creates disposable keys.
 
 import pytest
 
+
 @pytest.mark.core
 @pytest.mark.serial
 class TestApiKeyLifecycle:

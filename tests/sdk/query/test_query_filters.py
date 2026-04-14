@@ -7,17 +7,16 @@ Tests for metadata filter expressions in queries using the Vectara Python SDK.
 import uuid
 
 import pytest
-
+from vectara.errors import BadRequestError, NotFoundError
 from vectara.types import (
-    SearchCorporaParameters,
-    KeyedSearchCorpus,
     CoreDocumentPart,
     CreateDocumentRequest_Core,
     FilterAttribute,
     FilterAttributeLevel,
     FilterAttributeType,
+    KeyedSearchCorpus,
+    SearchCorporaParameters,
 )
-from vectara.errors import BadRequestError, NotFoundError
 
 from utils.waiters import wait_for
 

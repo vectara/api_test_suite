@@ -6,7 +6,6 @@ that context is not shared between separate sessions.
 """
 
 import pytest
-
 from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 
 from utils.waiters import wait_for
@@ -63,12 +62,8 @@ class TestAgentContextPreservation:
             events = list(sdk_client.agent_events.list(sdk_shared_agent, session_key))
             output_text = _extract_output_text(events).lower()
 
-            assert "acme" in output_text, (
-                f"Turn 3 should reference 'Acme' from turn 1, got: {output_text[:200]}"
-            )
-            assert "semantic" in output_text or "search" in output_text, (
-                f"Turn 3 should reference 'semantic search' from turn 2, got: {output_text[:200]}"
-            )
+            assert "acme" in output_text, f"Turn 3 should reference 'Acme' from turn 1, got: {output_text[:200]}"
+            assert "semantic" in output_text or "search" in output_text, f"Turn 3 should reference 'semantic search' from turn 2, got: {output_text[:200]}"
         finally:
             try:
                 sdk_client.agent_sessions.delete(sdk_shared_agent, session_key)
@@ -113,12 +108,8 @@ class TestAgentContextPreservation:
             events_b = list(sdk_client.agent_events.list(sdk_shared_agent, key_b))
             output_b = _extract_output_text(events_b).lower()
 
-            assert "xylophone" not in output_b and "7749" not in output_b, (
-                f"Session B should NOT know session A's secret code, but got: {output_b[:200]}"
-            )
-            assert "bartholomew" not in output_b, (
-                f"Session B should NOT know session A's pet name, but got: {output_b[:200]}"
-            )
+            assert "xylophone" not in output_b and "7749" not in output_b, f"Session B should NOT know session A's secret code, but got: {output_b[:200]}"
+            assert "bartholomew" not in output_b, f"Session B should NOT know session A's pet name, but got: {output_b[:200]}"
         finally:
             for key in [key_a, key_b]:
                 if key:

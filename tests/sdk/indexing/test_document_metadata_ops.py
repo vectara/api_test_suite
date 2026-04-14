@@ -6,7 +6,6 @@ as well as multipart document indexing using the Vectara Python SDK.
 """
 
 import pytest
-
 from vectara.types import CoreDocumentPart, CreateDocumentRequest_Core
 
 

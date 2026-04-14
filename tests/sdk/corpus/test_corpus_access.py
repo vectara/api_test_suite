@@ -7,7 +7,6 @@ Tests for API key scoping and corpus-level access control using the Vectara Pyth
 import uuid
 
 import pytest
-
 from vectara import Vectara
 from vectara.environment import VectaraEnvironment
 from vectara.types import CoreDocumentPart, CreateDocumentRequest_Core

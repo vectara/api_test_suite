@@ -8,7 +8,6 @@ Core-level tests for creating corpora with custom filter attributes
 import uuid
 
 import pytest
-
 from vectara.types import FilterAttribute
 
 

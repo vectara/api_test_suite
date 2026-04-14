@@ -10,7 +10,6 @@ import os
 import tempfile
 
 import pytest
-
 from vectara.errors import NotFoundError
 
 from utils.waiters import wait_for

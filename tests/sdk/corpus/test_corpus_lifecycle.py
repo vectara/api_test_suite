@@ -6,7 +6,6 @@ replace filter attributes, compute size, and reset.
 """
 
 import pytest
-
 from vectara.types import FilterAttribute
 
 from utils.waiters import wait_for

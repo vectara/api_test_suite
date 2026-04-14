@@ -6,7 +6,6 @@ basic operations work.
 """
 
 import pytest
-
 from vectara import Vectara
 
 

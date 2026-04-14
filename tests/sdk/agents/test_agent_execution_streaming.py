@@ -5,7 +5,6 @@ Tests for agent execution event responses, verifying events arrive correctly.
 """
 
 import pytest
-
 from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 
 from utils.waiters import wait_for
@@ -49,10 +48,7 @@ class TestAgentExecutionStreaming:
         assert len(events) > 0, "Expected at least one event"
 
         event_types = [getattr(e, "type", None) for e in events]
-        has_output = any(
-            et and ("output" in str(et) or "message" in str(et))
-            for et in event_types
-        )
+        has_output = any(et and ("output" in str(et) or "message" in str(et)) for et in event_types)
         assert has_output, f"No output event found. Event types: {event_types}"
 
         try:

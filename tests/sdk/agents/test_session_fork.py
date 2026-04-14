@@ -5,10 +5,9 @@ Tests for forking agent sessions, including event copying and error handling.
 """
 
 import pytest
-
-from vectara.errors import NotFoundError, BadRequestError
-from vectara.core.api_error import ApiError
 from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
+from vectara.core.api_error import ApiError
+from vectara.errors import BadRequestError, NotFoundError
 
 
 @pytest.mark.core
@@ -43,9 +42,7 @@ class TestSessionFork:
 
         # Verify forked session has events
         forked_events = list(sdk_client.agent_events.list(sdk_shared_agent, forked_key))
-        assert len(forked_events) == len(source_events), (
-            f"Expected {len(source_events)} events, got {len(forked_events)}"
-        )
+        assert len(forked_events) == len(source_events), f"Expected {len(source_events)} events, got {len(forked_events)}"
 
         # Event IDs should be different
         source_ids = {getattr(e, "id", None) for e in source_events}
@@ -55,9 +52,7 @@ class TestSessionFork:
         # Event types should match between source and fork
         source_types = [getattr(e, "type", None) for e in source_events]
         forked_types = [getattr(e, "type", None) for e in forked_events]
-        assert source_types == forked_types, (
-            f"Event types mismatch: source={source_types}, forked={forked_types}"
-        )
+        assert source_types == forked_types, f"Event types mismatch: source={source_types}, forked={forked_types}"
 
         try:
             sdk_client.agent_sessions.delete(sdk_shared_agent, forked_key)

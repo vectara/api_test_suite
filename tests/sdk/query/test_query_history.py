@@ -39,6 +39,4 @@ class TestQueryHistory:
             pytest.skip("No query history entries available")
 
         entries_with_gen = [e for e in entries if getattr(e, "generation", None)]
-        assert len(entries_with_gen) > 0, (
-            f"Expected at least one entry with generation content"
-        )
+        assert len(entries_with_gen) > 0, f"Expected at least one entry with generation content"

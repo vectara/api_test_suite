@@ -8,12 +8,11 @@ using the Vectara Python SDK.
 import uuid
 
 import pytest
-
 from vectara.types import (
-    SearchCorporaParameters,
-    KeyedSearchCorpus,
     CoreDocumentPart,
     CreateDocumentRequest_Core,
+    KeyedSearchCorpus,
+    SearchCorporaParameters,
 )
 
 from utils.waiters import wait_for
@@ -71,18 +70,14 @@ class TestCrossCorpusQuery:
                 corpus1_key,
                 request=CreateDocumentRequest_Core(
                     id=doc1_id,
-                    document_parts=[
-                        CoreDocumentPart(text="Medical research on heart disease prevention")
-                    ],
+                    document_parts=[CoreDocumentPart(text="Medical research on heart disease prevention")],
                 ),
             )
             sdk_client.documents.create(
                 corpus2_key,
                 request=CreateDocumentRequest_Core(
                     id=doc2_id,
-                    document_parts=[
-                        CoreDocumentPart(text="Legal precedents in contract law disputes")
-                    ],
+                    document_parts=[CoreDocumentPart(text="Legal precedents in contract law disputes")],
                 ),
             )
 

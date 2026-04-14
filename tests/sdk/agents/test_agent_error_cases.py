@@ -7,9 +7,8 @@ Tests for error handling on non-existent agents and sessions.
 import uuid
 
 import pytest
-
-from vectara.errors import NotFoundError
 from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
+from vectara.errors import NotFoundError
 
 from utils.waiters import wait_for
 
@@ -93,14 +92,8 @@ class TestAgentErrorCases:
             assert response is not None, "Should be able to chat in forked session"
 
             response_events = list(sdk_client.agent_events.list(agent_key, forked_key))
-            has_output = any(
-                getattr(e, "type", None) and "output" in str(getattr(e, "type", ""))
-                for e in response_events
-            )
-            assert has_output, (
-                f"Forked session response should have agent_output: "
-                f"{[getattr(e, 'type', None) for e in response_events]}"
-            )
+            has_output = any(getattr(e, "type", None) and "output" in str(getattr(e, "type", "")) for e in response_events)
+            assert has_output, f"Forked session response should have agent_output: " f"{[getattr(e, 'type', None) for e in response_events]}"
         finally:
             if forked_key:
                 try:

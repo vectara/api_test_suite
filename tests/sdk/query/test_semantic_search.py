@@ -6,8 +6,7 @@ using the Vectara Python SDK.
 """
 
 import pytest
-
-from vectara.types import SearchCorporaParameters, KeyedSearchCorpus
+from vectara.types import KeyedSearchCorpus, SearchCorporaParameters
 
 
 @pytest.mark.sanity

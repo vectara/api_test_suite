@@ -10,13 +10,8 @@ Tests will skip gracefully if rephraser is not available.
 """
 
 import pytest
-
-from vectara.types import (
-    SearchCorporaParameters,
-    KeyedSearchCorpus,
-    ChatParameters,
-)
 from vectara.errors import BadRequestError
+from vectara.types import ChatParameters, KeyedSearchCorpus, SearchCorporaParameters
 
 
 @pytest.mark.core

@@ -5,7 +5,6 @@ Tests for compaction config on agents.
 """
 
 import pytest
-
 from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 
 from utils.waiters import wait_for
@@ -72,9 +71,7 @@ class TestManualCompaction:
                 )
 
             events = list(sdk_client.agent_events.list(sdk_shared_agent, session_key))
-            assert len(events) >= 3, (
-                f"Expected at least 3 events after 3 turns, got {len(events)}"
-            )
+            assert len(events) >= 3, f"Expected at least 3 events after 3 turns, got {len(events)}"
         finally:
             try:
                 sdk_client.agent_sessions.delete(sdk_shared_agent, session_key)

@@ -7,7 +7,6 @@ Tests for user create, read, update, and delete operations.
 import uuid
 
 import pytest
-
 from vectara.errors import NotFoundError
 
 from utils.waiters import wait_for
@@ -49,8 +48,7 @@ class TestUserCrud:
         try:
             assert user is not None, "Create user should return a user object"
             assert getattr(user, "email", None) == email, (
-                f"Create response should echo back email: expected {email!r}, "
-                f"got {getattr(user, 'email', None)!r}"
+                f"Create response should echo back email: expected {email!r}, " f"got {getattr(user, 'email', None)!r}"
             )
         finally:
             username = _extract_username(user, email)
@@ -74,11 +72,7 @@ class TestUserCrud:
         try:
             pager = sdk_client.users.list()
             users = list(pager)
-            found = any(
-                getattr(u, "username", None) == username
-                or getattr(u, "email", None) == email
-                for u in users
-            )
+            found = any(getattr(u, "username", None) == username or getattr(u, "email", None) == email for u in users)
             assert found, f"User {username} (email={email}) not found in listing"
         finally:
             try:
@@ -99,9 +93,7 @@ class TestUserCrud:
         username = _extract_username(user, email)
         try:
             retrieved = sdk_client.users.get(username)
-            assert getattr(retrieved, "email", None) == email, (
-                f"Expected email={email}, got: {getattr(retrieved, 'email', None)}"
-            )
+            assert getattr(retrieved, "email", None) == email, f"Expected email={email}, got: {getattr(retrieved, 'email', None)}"
         finally:
             try:
                 sdk_client.users.delete(username)

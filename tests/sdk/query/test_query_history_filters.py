@@ -29,6 +29,4 @@ class TestQueryHistoryFilters:
             pytest.skip(f"Need at least 3 history entries for limit test, have {full_count}")
 
         limited_entries = list(sdk_client.query_history.list(limit=2))
-        assert len(limited_entries) <= 2, (
-            f"Limit=2 should return at most 2 entries, got {len(limited_entries)}"
-        )
+        assert len(limited_entries) <= 2, f"Limit=2 should return at most 2 entries, got {len(limited_entries)}"

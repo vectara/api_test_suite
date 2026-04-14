@@ -38,9 +38,7 @@ class TestLlmCrud:
 
         llm_name = getattr(llm, "name", None) or getattr(llm, "id", None)
         assert llm_name, f"No LLM name/id in create response"
-        assert getattr(llm, "name", None) == f"test_llm_{unique_id}", (
-            f"LLM name mismatch: {getattr(llm, 'name', None)}"
-        )
+        assert getattr(llm, "name", None) == f"test_llm_{unique_id}", f"LLM name mismatch: {getattr(llm, 'name', None)}"
 
         if llm_name:
             sdk_client.llms.delete(llm_name)

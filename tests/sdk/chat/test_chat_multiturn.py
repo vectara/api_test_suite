@@ -6,12 +6,7 @@ using the Vectara Python SDK.
 """
 
 import pytest
-
-from vectara.types import (
-    SearchCorporaParameters,
-    KeyedSearchCorpus,
-    ChatParameters,
-)
+from vectara.types import ChatParameters, KeyedSearchCorpus, SearchCorporaParameters
 
 
 @pytest.mark.core
@@ -107,9 +102,7 @@ class TestChatMultiTurn:
             assert len(turns_with_answers) > 0, "Expected at least one turn with an answer"
             for turn in turns_with_answers:
                 answer = turn.answer
-                assert len(answer) > 20, (
-                    f"Turn answer should be substantive (>20 chars), got {len(answer)} chars: {answer[:50]!r}"
-                )
+                assert len(answer) > 20, f"Turn answer should be substantive (>20 chars), got {len(answer)} chars: {answer[:50]!r}"
         finally:
             try:
                 sdk_client.chats.delete(chat_id)

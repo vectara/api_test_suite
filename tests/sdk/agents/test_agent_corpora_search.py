@@ -6,12 +6,11 @@ ask questions, verify the agent uses corpus content in its answers.
 """
 
 import pytest
-
 from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 
-from .conftest import create_agent
-
 from utils.waiters import wait_for
+
+from .conftest import create_agent
 
 
 def _session_exists(sdk_client, agent_key, session_key):
@@ -81,10 +80,7 @@ class TestAgentCorporaSearch:
             assert len(events) > 0, f"Expected events in response"
 
             event_types = [getattr(e, "type", None) for e in events]
-            has_output = any(
-                t and ("output" in str(t) or "message" in str(t))
-                for t in event_types
-            )
+            has_output = any(t and ("output" in str(t) or "message" in str(t)) for t in event_types)
             assert has_output, f"Expected agent_output event, got types: {event_types}"
 
             output_text = _extract_output_text(events)

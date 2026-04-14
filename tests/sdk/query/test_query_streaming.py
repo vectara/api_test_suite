@@ -5,11 +5,10 @@ Tests for streaming query responses using the Vectara Python SDK.
 """
 
 import pytest
-
 from vectara.types import (
-    SearchCorporaParameters,
-    KeyedSearchCorpus,
     GenerationParameters,
+    KeyedSearchCorpus,
+    SearchCorporaParameters,
 )
 
 
@@ -17,14 +16,16 @@ from vectara.types import (
 def check_streaming_available(sdk_client, sdk_seeded_shared_corpus):
     """Skip all tests if streaming query is not supported."""
     try:
-        events = list(sdk_client.query_stream(
-            query="test",
-            search=SearchCorporaParameters(
-                corpora=[KeyedSearchCorpus(corpus_key=sdk_seeded_shared_corpus)],
-                limit=1,
-            ),
-            generation=GenerationParameters(),
-        ))
+        events = list(
+            sdk_client.query_stream(
+                query="test",
+                search=SearchCorporaParameters(
+                    corpora=[KeyedSearchCorpus(corpus_key=sdk_seeded_shared_corpus)],
+                    limit=1,
+                ),
+                generation=GenerationParameters(),
+            )
+        )
         if not events:
             pytest.skip("Streaming query returned no events")
     except Exception as e:
@@ -37,14 +38,16 @@ class TestQueryStreaming:
 
     def test_streaming_query_events(self, sdk_client, sdk_seeded_shared_corpus):
         """Test that streaming query returns valid typed events."""
-        events = list(sdk_client.query_stream(
-            query="artificial intelligence",
-            search=SearchCorporaParameters(
-                corpora=[KeyedSearchCorpus(corpus_key=sdk_seeded_shared_corpus)],
-                limit=5,
-            ),
-            generation=GenerationParameters(),
-        ))
+        events = list(
+            sdk_client.query_stream(
+                query="artificial intelligence",
+                search=SearchCorporaParameters(
+                    corpora=[KeyedSearchCorpus(corpus_key=sdk_seeded_shared_corpus)],
+                    limit=5,
+                ),
+                generation=GenerationParameters(),
+            )
+        )
 
         assert len(events) > 0, "Expected at least one streaming event"
 
@@ -53,16 +56,18 @@ class TestQueryStreaming:
 
     def test_streaming_query_fcs(self, sdk_client, sdk_seeded_shared_corpus):
         """Test that streaming query with FCS enabled returns a score."""
-        events = list(sdk_client.query_stream(
-            query="artificial intelligence",
-            search=SearchCorporaParameters(
-                corpora=[KeyedSearchCorpus(corpus_key=sdk_seeded_shared_corpus)],
-                limit=5,
-            ),
-            generation=GenerationParameters(
-                enable_factual_consistency_score=True,
-            ),
-        ))
+        events = list(
+            sdk_client.query_stream(
+                query="artificial intelligence",
+                search=SearchCorporaParameters(
+                    corpora=[KeyedSearchCorpus(corpus_key=sdk_seeded_shared_corpus)],
+                    limit=5,
+                ),
+                generation=GenerationParameters(
+                    enable_factual_consistency_score=True,
+                ),
+            )
+        )
 
         fcs_found = False
         for event in events:

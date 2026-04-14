@@ -8,7 +8,6 @@ using the Vectara Python SDK.
 import uuid
 
 import pytest
-
 from vectara.corpora.types import QueryCorporaRequestSearch
 from vectara.types import CoreDocumentPart, CreateDocumentRequest_Core, FilterAttribute
 
@@ -69,10 +68,7 @@ class TestFilterAttributeTypes:
             )
 
             wait_for(
-                lambda: (
-                    _document_exists(sdk_client, corpus.key, doc1_id)
-                    and _document_exists(sdk_client, corpus.key, doc2_id)
-                ),
+                lambda: (_document_exists(sdk_client, corpus.key, doc1_id) and _document_exists(sdk_client, corpus.key, doc2_id)),
                 timeout=20,
                 interval=2,
                 description="both documents indexed",

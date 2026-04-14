@@ -9,11 +9,10 @@ import logging
 import uuid
 
 import pytest
-
 from vectara import Vectara
+from vectara.core.request_options import RequestOptions
 from vectara.environment import VectaraEnvironment
 from vectara.types import CoreDocumentPart, CreateDocumentRequest_Core
-from vectara.core.request_options import RequestOptions
 
 from utils.waiters import wait_for
 

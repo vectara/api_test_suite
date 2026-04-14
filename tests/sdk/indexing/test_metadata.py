@@ -8,7 +8,6 @@ special characters, and verifying indexing response times using the Vectara Pyth
 import time
 
 import pytest
-
 from vectara.types import CoreDocumentPart, CreateDocumentRequest_Core
 
 from utils.waiters import wait_for

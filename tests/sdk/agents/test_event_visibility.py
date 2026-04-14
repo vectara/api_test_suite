@@ -7,7 +7,6 @@ These tests focus on event listing and presence verification.
 """
 
 import pytest
-
 from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 
 
@@ -36,9 +35,7 @@ class TestEventVisibility:
 
         # Verify events have type attributes
         for event in events:
-            assert getattr(event, "type", None) is not None, (
-                f"Event should have a type: {event}"
-            )
+            assert getattr(event, "type", None) is not None, f"Event should have a type: {event}"
 
         try:
             sdk_client.agent_sessions.delete(sdk_shared_agent, session_key)

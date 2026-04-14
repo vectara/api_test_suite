@@ -5,12 +5,7 @@ Tests for listing and using rerankers via the Vectara Python SDK.
 """
 
 import pytest
-
-from vectara.types import (
-    SearchCorporaParameters,
-    KeyedSearchCorpus,
-    SearchReranker_Mmr,
-)
+from vectara.types import KeyedSearchCorpus, SearchCorporaParameters, SearchReranker_Mmr
 
 
 @pytest.fixture(scope="module", autouse=True)

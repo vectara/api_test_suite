@@ -8,12 +8,11 @@ for query and index operations, and that basic corpus listing works.
 import uuid
 
 import pytest
-
 from vectara.types import (
     CoreDocumentPart,
     CreateDocumentRequest_Core,
-    SearchCorporaParameters,
     KeyedSearchCorpus,
+    SearchCorporaParameters,
 )
 
 

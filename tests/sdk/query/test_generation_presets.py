@@ -5,11 +5,10 @@ Tests for listing and using generation presets via the Vectara Python SDK.
 """
 
 import pytest
-
 from vectara.types import (
-    SearchCorporaParameters,
-    KeyedSearchCorpus,
     GenerationParameters,
+    KeyedSearchCorpus,
+    SearchCorporaParameters,
 )
 
 

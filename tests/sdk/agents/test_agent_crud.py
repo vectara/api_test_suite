@@ -7,7 +7,6 @@ Tests for agent create, read, update, delete, and listing operations.
 import time
 
 import pytest
-
 from vectara.errors import NotFoundError
 
 from .conftest import create_agent
@@ -57,9 +56,7 @@ class TestAgentCrud:
         )
 
         try:
-            assert agent.description == "Agent with custom settings", (
-                f"Expected description 'Agent with custom settings', got {agent.description!r}"
-            )
+            assert agent.description == "Agent with custom settings", f"Expected description 'Agent with custom settings', got {agent.description!r}"
         finally:
             try:
                 sdk_client.agents.delete(agent.key)
@@ -70,9 +67,7 @@ class TestAgentCrud:
         """Test retrieving agent details."""
         retrieved = sdk_client.agents.get(sdk_shared_agent)
 
-        assert retrieved.key == sdk_shared_agent, (
-            f"Expected agent key {sdk_shared_agent!r}, got {retrieved.key!r}"
-        )
+        assert retrieved.key == sdk_shared_agent, f"Expected agent key {sdk_shared_agent!r}, got {retrieved.key!r}"
         assert retrieved.name is not None, "Agent should have a name"
 
     def test_update_agent(self, sdk_client, sdk_shared_agent):
@@ -89,9 +84,7 @@ class TestAgentCrud:
             )
 
             retrieved = sdk_client.agents.get(sdk_shared_agent)
-            assert retrieved.description == new_description, (
-                f"Description not persisted: expected {new_description!r}, got {retrieved.description!r}"
-            )
+            assert retrieved.description == new_description, f"Description not persisted: expected {new_description!r}, got {retrieved.description!r}"
         finally:
             sdk_client.agents.update(sdk_shared_agent, description=original_description)
 

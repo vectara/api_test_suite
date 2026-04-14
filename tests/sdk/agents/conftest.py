@@ -7,26 +7,24 @@ should create their own.
 """
 
 import logging
-import uuid
 import time
+import uuid
 
 import pytest
-
+from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 from vectara.types import (
-    AgentToolConfiguration_CorporaSearch,
     AgentCorporaSearchQueryConfiguration,
-    AgentSearchCorporaParameters,
     AgentKeyedSearchCorpus,
     AgentModel,
-    GenerationParameters,
+    AgentOutputParser_Default,
+    AgentSearchCorporaParameters,
+    AgentStepInstruction_Inline,
+    AgentToolConfiguration_CorporaSearch,
     CoreDocumentPart,
     CreateDocumentRequest_Core,
     FirstAgentStep,
-    AgentOutputParser_Default,
-    AgentStepInstruction_Inline,
+    GenerationParameters,
 )
-
-from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 
 from utils.waiters import wait_for
 
@@ -139,9 +137,7 @@ def sdk_shared_agent_corpus(sdk_client):
                 actual_key,
                 request=CreateDocumentRequest_Core(
                     id=doc["id"],
-                    document_parts=[
-                        CoreDocumentPart(text=doc["text"], metadata=doc["metadata"])
-                    ],
+                    document_parts=[CoreDocumentPart(text=doc["text"], metadata=doc["metadata"])],
                 ),
             )
             doc_ids.append(doc["id"])

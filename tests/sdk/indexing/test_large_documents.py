@@ -6,7 +6,6 @@ listing documents, and edge cases like empty documents using the Vectara Python 
 """
 
 import pytest
-
 from vectara.types import CoreDocumentPart, CreateDocumentRequest_Core
 
 from utils.waiters import wait_for

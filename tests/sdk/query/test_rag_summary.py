@@ -8,11 +8,10 @@ and summary response time using the Vectara Python SDK.
 import time
 
 import pytest
-
 from vectara.types import (
-    SearchCorporaParameters,
-    KeyedSearchCorpus,
     GenerationParameters,
+    KeyedSearchCorpus,
+    SearchCorporaParameters,
 )
 
 

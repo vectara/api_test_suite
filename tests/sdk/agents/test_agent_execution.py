@@ -6,10 +6,9 @@ and edge cases.
 """
 
 import pytest
-
-from vectara.errors import NotFoundError
-from vectara.core.api_error import ApiError
 from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
+from vectara.core.api_error import ApiError
+from vectara.errors import NotFoundError
 
 
 def _extract_output_text(events):

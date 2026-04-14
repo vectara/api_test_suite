@@ -10,14 +10,13 @@ Tests will skip gracefully if rephraser is not available.
 """
 
 import pytest
-
-from vectara.types import (
-    SearchCorporaParameters,
-    KeyedSearchCorpus,
-    GenerationParameters,
-    ChatParameters,
-)
 from vectara.errors import NotFoundError
+from vectara.types import (
+    ChatParameters,
+    GenerationParameters,
+    KeyedSearchCorpus,
+    SearchCorporaParameters,
+)
 
 
 @pytest.mark.core
@@ -88,10 +87,7 @@ class TestChat:
             )
 
             assert turn_response is not None, "Turn response should have data"
-            turn_has_content = (
-                getattr(turn_response, "answer", None) is not None
-                or getattr(turn_response, "turn_id", None) is not None
-            )
+            turn_has_content = getattr(turn_response, "answer", None) is not None or getattr(turn_response, "turn_id", None) is not None
             assert turn_has_content, f"Turn response should have answer or turn_id"
         finally:
             sdk_client.chats.delete(chat_id)

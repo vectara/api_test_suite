@@ -5,7 +5,6 @@ Core tests for agent session creation with metadata and message sending.
 """
 
 import pytest
-
 from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 
 
@@ -22,9 +21,7 @@ class TestAgentSessionAdvanced:
         # Verify session exists and metadata returned
         retrieved = sdk_client.agent_sessions.get(sdk_shared_agent, session_key)
         session_metadata = getattr(retrieved, "metadata", {}) or {}
-        assert session_metadata.get("topic") == "astronomy", (
-            f"Expected metadata topic=astronomy, got: {session_metadata}"
-        )
+        assert session_metadata.get("topic") == "astronomy", f"Expected metadata topic=astronomy, got: {session_metadata}"
 
         try:
             sdk_client.agent_sessions.delete(sdk_shared_agent, session_key)

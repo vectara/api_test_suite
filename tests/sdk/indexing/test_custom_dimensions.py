@@ -8,9 +8,12 @@ using the Vectara Python SDK. Uses a dedicated corpus with custom dimensions con
 import uuid
 
 import pytest
-
 from vectara.corpora.types import QueryCorporaRequestSearch
-from vectara.types import CoreDocumentPart, CorpusCustomDimension, CreateDocumentRequest_Core
+from vectara.types import (
+    CoreDocumentPart,
+    CorpusCustomDimension,
+    CreateDocumentRequest_Core,
+)
 
 from utils.waiters import wait_for
 

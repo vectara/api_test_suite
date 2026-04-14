@@ -12,13 +12,8 @@ Tests will skip gracefully if rephraser is not available.
 import re
 
 import pytest
-
-from vectara.types import (
-    SearchCorporaParameters,
-    KeyedSearchCorpus,
-    ChatParameters,
-)
-from vectara.errors import NotFoundError, BadRequestError
+from vectara.errors import BadRequestError, NotFoundError
+from vectara.types import ChatParameters, KeyedSearchCorpus, SearchCorporaParameters
 
 
 def _create_chat(sdk_client, corpus_key):
@@ -121,9 +116,7 @@ class TestChatTurns:
             )
 
             get_turn = sdk_client.chats.get_turn(chat_id, turn_id)
-            assert get_turn.enabled is False, (
-                f"Expected enabled=False after update, got: {get_turn.enabled}"
-            )
+            assert get_turn.enabled is False, f"Expected enabled=False after update, got: {get_turn.enabled}"
         finally:
             try:
                 sdk_client.chats.delete(chat_id)
