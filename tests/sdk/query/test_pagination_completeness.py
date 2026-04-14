@@ -53,7 +53,7 @@ class TestPaginationCompleteness:
                 )
 
             wait_for(
-                lambda: len(list(sdk_client.corpora.list_documents(corpus_key, limit=100))) >= num_docs,
+                lambda: len(list(sdk_client.documents.list(corpus_key, limit=100))) >= num_docs,
                 timeout=30,
                 interval=2,
                 description=f"all {num_docs} documents indexed",
