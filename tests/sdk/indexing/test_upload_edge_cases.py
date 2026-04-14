@@ -32,11 +32,12 @@ class TestUploadWithMetadata:
             metadata = {"author": "test_suite", "category": "technology", "version": "1"}
 
             with open(temp_path, "rb") as fh:
-                doc = sdk_client.upload.file(
-                    corpus_key,
-                    file=fh,
-                    metadata=metadata,
-                )
+                content = fh.read()
+            doc = sdk_client.upload.file(
+                corpus_key,
+                file=("test_metadata.txt", content, "text/plain"),
+                metadata=metadata,
+            )
             assert doc.id, f"No document ID in upload response: {doc}"
 
             wait_for(
@@ -67,10 +68,11 @@ class TestUploadErrors:
         try:
             with pytest.raises(NotFoundError):
                 with open(temp_path, "rb") as fh:
-                    sdk_client.upload.file(
-                        "nonexistent_corpus_xyz123",
-                        file=fh,
-                    )
+                    content = fh.read()
+                sdk_client.upload.file(
+                    "nonexistent_corpus_xyz123",
+                    file=("test.txt", content, "text/plain"),
+                )
         finally:
             os.unlink(temp_path)
 

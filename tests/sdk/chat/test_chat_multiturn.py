@@ -46,7 +46,8 @@ class TestChatMultiTurn:
             )
             turn_id_2 = add_resp.turn_id
 
-            turns = sdk_client.chats.list_turns(chat_id)
+            turns_response = sdk_client.chats.list_turns(chat_id)
+            turns = turns_response.turns or []
             assert len(turns) >= 2, f"Expected at least 2 turns, got {len(turns)}"
 
             turn_ids = [t.id for t in turns]
@@ -70,7 +71,8 @@ class TestChatMultiTurn:
                 ),
             )
 
-            turns = sdk_client.chats.list_turns(chat_id)
+            turns_response = sdk_client.chats.list_turns(chat_id)
+            turns = turns_response.turns or []
 
             for turn in turns:
                 turn_id = turn.id
@@ -98,7 +100,8 @@ class TestChatMultiTurn:
                 ),
             )
 
-            turns = sdk_client.chats.list_turns(chat_id)
+            turns_response = sdk_client.chats.list_turns(chat_id)
+            turns = turns_response.turns or []
 
             turns_with_answers = [t for t in turns if t.answer]
             assert len(turns_with_answers) > 0, "Expected at least one turn with an answer"

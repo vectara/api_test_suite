@@ -24,3 +24,4 @@ jsonschema>=4.21.0
 
 # Vectara Python SDK (for SDK integration tests)
 vectara>=0.4.1
+httpx-sse>=0.4.0  # Missing from vectara SDK dependencies

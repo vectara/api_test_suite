@@ -11,11 +11,16 @@ import uuid
 import pytest
 
 from vectara import Vectara
+from vectara.environment import VectaraEnvironment
 from vectara.types import CoreDocumentPart, CreateDocumentRequest_Core
+from vectara.core.request_options import RequestOptions
 
 from utils.waiters import wait_for
 
 logger = logging.getLogger(__name__)
+
+# Default request options with retries matching the HTTP test suite (3 retries)
+SDK_REQUEST_OPTIONS: RequestOptions = {"max_retries": 3}
 
 
 # ---------------------------------------------------------------------------
@@ -25,11 +30,32 @@ logger = logging.getLogger(__name__)
 
 @pytest.fixture(scope="session")
 def sdk_client(config):
-    """Provide an authenticated Vectara SDK client."""
-    return Vectara(
-        api_key=config.api_key,
-        server_url=config.base_url,
-    )
+    """Provide an authenticated Vectara SDK client with retry configuration."""
+    import vectara.core.http_client as _http
+
+    # Patch default retry count to 3 (matching HTTP test suite)
+    _orig_request = _http.HttpClient.request
+    _orig_request_fn = _orig_request
+
+    def _patched_request(self, *args, request_options=None, **kwargs):
+        if request_options is None:
+            request_options = SDK_REQUEST_OPTIONS
+        elif "max_retries" not in request_options:
+            request_options = {**request_options, **SDK_REQUEST_OPTIONS}
+        return _orig_request_fn(self, *args, request_options=request_options, **kwargs)
+
+    _http.HttpClient.request = _patched_request
+
+    # Use custom environment if base_url is not the default production URL
+    base_url = config.base_url
+    if base_url and base_url != "https://api.vectara.io":
+        env = VectaraEnvironment(
+            default=base_url,
+            auth=base_url.replace("api.", "auth."),
+        )
+        return Vectara(api_key=config.api_key, environment=env)
+
+    return Vectara(api_key=config.api_key)
 
 
 # ---------------------------------------------------------------------------

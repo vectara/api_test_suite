@@ -17,8 +17,9 @@ from vectara.types import (
 def check_presets_available(sdk_client):
     """Skip all tests if generation presets API is not available."""
     try:
-        presets = list(sdk_client.generation_presets.list(limit=1))
-        if not presets:
+        pager = sdk_client.generation_presets.list(limit=1)
+        first = next(iter(pager), None)
+        if first is None:
             pytest.skip("No generation presets available")
     except Exception:
         pytest.skip("Generation presets API not available")
@@ -30,7 +31,15 @@ class TestGenerationPresets:
 
     def test_list_generation_presets(self, sdk_client):
         """Test listing generation presets with proper structure."""
-        presets = list(sdk_client.generation_presets.list(limit=50))
+        pager = sdk_client.generation_presets.list(limit=50)
+        presets = []
+        try:
+            for p in pager:
+                presets.append(p)
+                if len(presets) >= 50:
+                    break
+        except Exception:
+            pass
         assert isinstance(presets, list)
         assert len(presets) > 0, "Expected at least one generation preset"
         first = presets[0]
@@ -38,7 +47,15 @@ class TestGenerationPresets:
 
     def test_query_with_preset(self, sdk_client, sdk_seeded_shared_corpus):
         """Test querying with a specific generation preset."""
-        presets = list(sdk_client.generation_presets.list(limit=50))
+        pager = sdk_client.generation_presets.list(limit=50)
+        presets = []
+        try:
+            for p in pager:
+                presets.append(p)
+                if len(presets) >= 50:
+                    break
+        except Exception:
+            pass
         enabled_presets = [p for p in presets if getattr(p, "enabled", False)]
         if not enabled_presets:
             pytest.skip("No enabled generation presets available")

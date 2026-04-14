@@ -9,6 +9,7 @@ import uuid
 import pytest
 
 from vectara.errors import NotFoundError
+from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 
 from utils.waiters import wait_for
 
@@ -40,22 +41,24 @@ class TestAgentErrorCases:
         """testNonSseInputOnNonExistentSession -- 404 for bad session."""
         with pytest.raises(NotFoundError):
             sdk_client.agent_events.create(
-                agent_key=sdk_shared_agent,
-                session_key=f"ase_fake_{uuid.uuid4().hex[:8]}",
-                type="input_message",
-                messages=[{"type": "text", "content": "Hello"}],
-                stream_response=False,
+                sdk_shared_agent,
+                f"ase_fake_{uuid.uuid4().hex[:8]}",
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "Hello"}],
+                    stream_response=False,
+                ),
             )
 
     def test_send_message_nonexistent_agent(self, sdk_client):
         """testNonSseInputOnNonExistentAgent -- 404 for bad agent."""
         with pytest.raises(NotFoundError):
             sdk_client.agent_events.create(
-                agent_key=f"nonexistent_{uuid.uuid4().hex[:8]}",
-                session_key="fake_session",
-                type="input_message",
-                messages=[{"type": "text", "content": "Hello"}],
-                stream_response=False,
+                f"nonexistent_{uuid.uuid4().hex[:8]}",
+                "fake_session",
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "Hello"}],
+                    stream_response=False,
+                ),
             )
 
     def test_fork_session_continue_conversation(self, sdk_client, sdk_agent_with_session):
@@ -80,11 +83,12 @@ class TestAgentErrorCases:
             )
 
             response = sdk_client.agent_events.create(
-                agent_key=agent_key,
-                session_key=forked_key,
-                type="input_message",
-                messages=[{"type": "text", "content": "Continue the conversation"}],
-                stream_response=False,
+                agent_key,
+                forked_key,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "Continue the conversation"}],
+                    stream_response=False,
+                ),
             )
             assert response is not None, "Should be able to chat in forked session"
 

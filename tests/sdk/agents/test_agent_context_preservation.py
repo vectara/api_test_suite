@@ -7,6 +7,8 @@ that context is not shared between separate sessions.
 
 import pytest
 
+from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
+
 from utils.waiters import wait_for
 
 
@@ -28,29 +30,32 @@ class TestAgentContextPreservation:
             )
 
             turn1 = sdk_client.agent_events.create(
-                agent_key=sdk_shared_agent,
-                session_key=session_key,
-                type="input_message",
-                messages=[{"type": "text", "content": "My name is Alexander and I work at Acme Corp."}],
-                stream_response=False,
+                sdk_shared_agent,
+                session_key,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "My name is Alexander and I work at Acme Corp."}],
+                    stream_response=False,
+                ),
             )
             assert turn1 is not None, "Turn 1 failed"
 
             turn2 = sdk_client.agent_events.create(
-                agent_key=sdk_shared_agent,
-                session_key=session_key,
-                type="input_message",
-                messages=[{"type": "text", "content": "I'm interested in semantic search technology."}],
-                stream_response=False,
+                sdk_shared_agent,
+                session_key,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "I'm interested in semantic search technology."}],
+                    stream_response=False,
+                ),
             )
             assert turn2 is not None, "Turn 2 failed"
 
             turn3 = sdk_client.agent_events.create(
-                agent_key=sdk_shared_agent,
-                session_key=session_key,
-                type="input_message",
-                messages=[{"type": "text", "content": "What company do I work at and what technology am I interested in?"}],
-                stream_response=False,
+                sdk_shared_agent,
+                session_key,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "What company do I work at and what technology am I interested in?"}],
+                    stream_response=False,
+                ),
             )
             assert turn3 is not None, "Turn 3 failed"
 
@@ -88,19 +93,21 @@ class TestAgentContextPreservation:
                 )
 
             sdk_client.agent_events.create(
-                agent_key=sdk_shared_agent,
-                session_key=key_a,
-                type="input_message",
-                messages=[{"type": "text", "content": "Remember this secret code: XYLOPHONE-7749. My pet iguana is named Bartholomew."}],
-                stream_response=False,
+                sdk_shared_agent,
+                key_a,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "Remember this secret code: XYLOPHONE-7749. My pet iguana is named Bartholomew."}],
+                    stream_response=False,
+                ),
             )
 
             sdk_client.agent_events.create(
-                agent_key=sdk_shared_agent,
-                session_key=key_b,
-                type="input_message",
-                messages=[{"type": "text", "content": "What is my secret code? What is my pet's name?"}],
-                stream_response=False,
+                sdk_shared_agent,
+                key_b,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "What is my secret code? What is my pet's name?"}],
+                    stream_response=False,
+                ),
             )
 
             events_b = list(sdk_client.agent_events.list(sdk_shared_agent, key_b))

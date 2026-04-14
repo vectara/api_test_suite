@@ -1,40 +1,115 @@
 """
 Agent-specific fixtures for SDK tests.
 
-Provides a module-scoped corpus with agent-focused documents and a reusable
-shared agent for execution and session tests. CRUD tests create their own
-agents per-test since they mutate agent state.
+Session-scoped corpus and shared agent to minimize API calls.
+Only tests that truly need a separate agent (delete, dedicated config)
+should create their own.
 """
 
 import logging
 import uuid
+import time
 
 import pytest
 
 from vectara.types import (
-    AgentRagConfig,
-    CorporaSearchToolConfig,
-    SearchCorporaParameters,
-    KeyedSearchCorpus,
+    AgentToolConfiguration_CorporaSearch,
+    AgentCorporaSearchQueryConfiguration,
+    AgentSearchCorporaParameters,
+    AgentKeyedSearchCorpus,
+    AgentModel,
     GenerationParameters,
     CoreDocumentPart,
     CreateDocumentRequest_Core,
+    FirstAgentStep,
+    AgentOutputParser_Default,
+    AgentStepInstruction_Inline,
 )
+
+from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 
 from utils.waiters import wait_for
 
 logger = logging.getLogger(__name__)
 
 
-@pytest.fixture(scope="module")
+# ---------------------------------------------------------------------------
+# Builder helpers (importable by test files)
+# ---------------------------------------------------------------------------
+
+
+def _build_agent_tool_configs(corpus_key):
+    """Build a standard corpora_search tool configuration for an agent."""
+    return {
+        "corpora_search": AgentToolConfiguration_CorporaSearch(
+            query_configuration=AgentCorporaSearchQueryConfiguration(
+                search=AgentSearchCorporaParameters(
+                    corpora=[AgentKeyedSearchCorpus(corpus_key=corpus_key)],
+                ),
+                generation=GenerationParameters(),
+            ),
+        ),
+    }
+
+
+def _build_agent_model():
+    """Build a default agent model configuration."""
+    return AgentModel(name="gpt-4o")
+
+
+def _build_first_step():
+    """Build the required first_step for agent creation."""
+    return FirstAgentStep(
+        name="main",
+        instructions=[
+            AgentStepInstruction_Inline(
+                name="system",
+                template="You are a helpful assistant.",
+            ),
+        ],
+        output_parser=AgentOutputParser_Default(),
+    )
+
+
+def create_agent(sdk_client, corpus_key, name_prefix="SDK Agent", description="SDK test agent"):
+    """Create an agent with standard config. Use this instead of inlining creation."""
+    return sdk_client.agents.create(
+        name=f"{name_prefix} {uuid.uuid4().hex[:8]}",
+        tool_configurations=_build_agent_tool_configs(corpus_key),
+        model=_build_agent_model(),
+        first_step=_build_first_step(),
+        description=description,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _has_documents(sdk_client, corpus_key):
+    """Return True when at least one document is present in the corpus."""
+    try:
+        items = list(sdk_client.documents.list(corpus_key, limit=1))
+        return len(items) > 0
+    except Exception:
+        return False
+
+
+# ---------------------------------------------------------------------------
+# Session-scoped fixtures (created once for the entire test run)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(scope="session")
 def sdk_shared_agent_corpus(sdk_client):
-    """Module-scoped corpus with agent-focused docs."""
+    """Session-scoped corpus with agent-focused docs. Created once, shared by all agent tests."""
     corpus_key = f"sdk_agent_corpus_{uuid.uuid4().hex}"
 
     corpus = sdk_client.corpora.create(
         name=f"SDK Agent Test Corpus {uuid.uuid4().hex[:8]}",
         key=corpus_key,
-        description="Shared SDK agent test corpus",
+        description="Session-scoped SDK agent test corpus",
     )
 
     actual_key = corpus.key
@@ -65,10 +140,7 @@ def sdk_shared_agent_corpus(sdk_client):
                 request=CreateDocumentRequest_Core(
                     id=doc["id"],
                     document_parts=[
-                        CoreDocumentPart(
-                            text=doc["text"],
-                            metadata=doc["metadata"],
-                        )
+                        CoreDocumentPart(text=doc["text"], metadata=doc["metadata"])
                     ],
                 ),
             )
@@ -96,47 +168,19 @@ def sdk_shared_agent_corpus(sdk_client):
         pass
 
 
-def _has_documents(sdk_client, corpus_key):
-    """Return True when at least one document is present in the corpus."""
-    try:
-        docs = sdk_client.documents.list(corpus_key, limit=1)
-        items = list(docs)
-        return len(items) > 0
-    except Exception:
-        return False
-
-
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def sdk_shared_agent(sdk_client, sdk_shared_agent_corpus):
-    """Module-scoped agent for execution and session tests.
+    """Session-scoped agent for read-only tests (execution, sessions, events, streaming).
 
-    Do NOT use for tests that mutate agent properties (update, delete, identity).
-    Those tests should create their own agent.
+    Do NOT mutate this agent (update description, disable, delete) in tests.
+    Tests that need to mutate should use `create_agent()` helper to make their own.
     """
-    try:
-        agent = sdk_client.agents.create(
-            name=f"SDK Shared Agent {uuid.uuid4().hex[:8]}",
-            type="rag",
-            agent_type_config=AgentRagConfig(
-                search=SearchCorporaParameters(
-                    corpora=[KeyedSearchCorpus(corpus_key=sdk_shared_agent_corpus)],
-                ),
-                generation=GenerationParameters(),
-            ),
-            description="Shared SDK agent for execution testing",
-        )
-    except Exception:
-        # Fallback to minimal agent
-        agent = sdk_client.agents.create(
-            name=f"SDK Shared Agent {uuid.uuid4().hex[:8]}",
-            type="rag",
-            agent_type_config=AgentRagConfig(
-                search=SearchCorporaParameters(
-                    corpora=[KeyedSearchCorpus(corpus_key=sdk_shared_agent_corpus)],
-                ),
-                generation=GenerationParameters(),
-            ),
-        )
+    agent = create_agent(
+        sdk_client,
+        sdk_shared_agent_corpus,
+        name_prefix="SDK Shared Agent",
+        description="Session-scoped shared agent for SDK tests",
+    )
 
     yield agent.key
 
@@ -152,18 +196,19 @@ def sdk_agent_with_session(sdk_client, sdk_shared_agent):
     session = sdk_client.agent_sessions.create(sdk_shared_agent)
     session_key = session.key
 
-    # Send a message to generate events
+    # Small delay to let session become available
+    time.sleep(1)
+
     sdk_client.agent_events.create(
-        agent_key=sdk_shared_agent,
-        session_key=session_key,
-        type="input_message",
-        messages=[{"type": "text", "content": "Setup message"}],
-        stream_response=False,
+        sdk_shared_agent,
+        session_key,
+        request=CreateAgentEventsRequestBody_InputMessage(
+            messages=[{"type": "text", "content": "Setup message"}],
+            stream_response=False,
+        ),
     )
 
-    # List events
-    events_pager = sdk_client.agent_events.list(sdk_shared_agent, session_key)
-    events = list(events_pager)
+    events = list(sdk_client.agent_events.list(sdk_shared_agent, session_key))
 
     yield sdk_shared_agent, session_key, events
 

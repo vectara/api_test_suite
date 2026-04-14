@@ -8,6 +8,7 @@ import pytest
 
 from vectara.errors import NotFoundError, BadRequestError
 from vectara.core.api_error import ApiError
+from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 
 
 @pytest.mark.core
@@ -21,11 +22,12 @@ class TestSessionFork:
 
         # Send message to generate events
         sdk_client.agent_events.create(
-            agent_key=sdk_shared_agent,
-            session_key=session_key,
-            type="input_message",
-            messages=[{"type": "text", "content": "Hello"}],
-            stream_response=False,
+            sdk_shared_agent,
+            session_key,
+            request=CreateAgentEventsRequestBody_InputMessage(
+                messages=[{"type": "text", "content": "Hello"}],
+                stream_response=False,
+            ),
         )
 
         # List events from source session

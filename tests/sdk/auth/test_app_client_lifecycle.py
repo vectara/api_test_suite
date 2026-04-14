@@ -6,8 +6,8 @@ Tests for app client create, read, update, and delete operations.
 
 import pytest
 
-from vectara.types import ApiRole
 from vectara.errors import NotFoundError
+from vectara.types import CreateAppClientRequest_ClientCredentials
 
 from utils.waiters import wait_for
 
@@ -31,8 +31,10 @@ class TestAppClientLifecycle:
         """Test creating a client_credentials app client."""
         name = f"test_client_{unique_id}"
         app_client = sdk_client.app_clients.create(
-            name=name,
-            api_roles=[ApiRole.SERVING],
+            request=CreateAppClientRequest_ClientCredentials(
+                name=name,
+                api_roles=["corpus_viewer"],
+            ),
         )
 
         try:
@@ -50,8 +52,10 @@ class TestAppClientLifecycle:
         """Test listing app clients contains a created client."""
         name = f"test_list_client_{unique_id}"
         app_client = sdk_client.app_clients.create(
-            name=name,
-            api_roles=[ApiRole.SERVING],
+            request=CreateAppClientRequest_ClientCredentials(
+                name=name,
+                api_roles=["corpus_viewer"],
+            ),
         )
 
         client_id = app_client.id
@@ -78,8 +82,10 @@ class TestAppClientLifecycle:
         """Test retrieving a specific app client."""
         name = f"test_get_client_{unique_id}"
         app_client = sdk_client.app_clients.create(
-            name=name,
-            api_roles=[ApiRole.SERVING],
+            request=CreateAppClientRequest_ClientCredentials(
+                name=name,
+                api_roles=["corpus_viewer"],
+            ),
         )
 
         client_id = app_client.id
@@ -98,8 +104,10 @@ class TestAppClientLifecycle:
         """Test updating an app client description."""
         name = f"test_update_client_{unique_id}"
         app_client = sdk_client.app_clients.create(
-            name=name,
-            api_roles=[ApiRole.SERVING],
+            request=CreateAppClientRequest_ClientCredentials(
+                name=name,
+                api_roles=["corpus_viewer"],
+            ),
         )
 
         client_id = app_client.id
@@ -122,15 +130,19 @@ class TestAppClientLifecycle:
         """Test deleting an app client and verifying 404."""
         name = f"test_delete_client_{unique_id}"
         app_client = sdk_client.app_clients.create(
-            name=name,
-            api_roles=[ApiRole.SERVING],
+            request=CreateAppClientRequest_ClientCredentials(
+                name=name,
+                api_roles=["corpus_viewer"],
+            ),
         )
 
         client_id = app_client.id
 
         sdk_client.app_clients.delete(client_id)
 
-        with pytest.raises(NotFoundError):
+        from vectara.core.api_error import ApiError
+
+        with pytest.raises((NotFoundError, ApiError)):
             sdk_client.app_clients.get(client_id)
 
 

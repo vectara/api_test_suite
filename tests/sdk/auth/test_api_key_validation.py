@@ -23,10 +23,7 @@ class TestApiKeyValidation:
 
     def test_invalid_api_key_rejected(self, config):
         """Test that invalid API keys are properly rejected."""
-        invalid_client = Vectara(
-            api_key="invalid_key_12345",
-            server_url=config.base_url,
-        )
+        invalid_client = Vectara(api_key="invalid_key_12345")
 
         with pytest.raises(Exception):
             # Any SDK call with an invalid key should raise

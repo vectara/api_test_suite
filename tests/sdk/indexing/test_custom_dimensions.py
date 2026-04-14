@@ -19,15 +19,20 @@ from utils.waiters import wait_for
 def sdk_custom_dims_corpus(sdk_client):
     """Function-scoped corpus with custom dimensions configured."""
     corpus_key = f"dims_test_{uuid.uuid4().hex}"
-    corpus = sdk_client.corpora.create(
-        name=f"Custom Dims Test {uuid.uuid4().hex[:8]}",
-        key=corpus_key,
-        description="Corpus with custom dimensions for testing",
-        custom_dimensions=[
-            CorpusCustomDimension(name="importance", indexing_default=0, querying_default=0),
-            CorpusCustomDimension(name="recency", indexing_default=0, querying_default=0),
-        ],
-    )
+    try:
+        corpus = sdk_client.corpora.create(
+            name=f"Custom Dims Test {uuid.uuid4().hex[:8]}",
+            key=corpus_key,
+            description="Corpus with custom dimensions for testing",
+            custom_dimensions=[
+                CorpusCustomDimension(name="importance", indexing_default=0, querying_default=0),
+                CorpusCustomDimension(name="recency", indexing_default=0, querying_default=0),
+            ],
+        )
+    except Exception as e:
+        if "412" in str(e) or "custom dimensions" in str(e).lower() or "Plan does not support" in str(e):
+            pytest.skip("Plan does not support custom dimensions in corpora")
+        raise
 
     wait_for(
         lambda: _corpus_exists(sdk_client, corpus.key),

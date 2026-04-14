@@ -6,6 +6,8 @@ Tests for agent execution event responses, verifying events arrive correctly.
 
 import pytest
 
+from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
+
 from utils.waiters import wait_for
 
 
@@ -34,11 +36,12 @@ class TestAgentExecutionStreaming:
         )
 
         response = sdk_client.agent_events.create(
-            agent_key=sdk_shared_agent,
-            session_key=session_key,
-            type="input_message",
-            messages=[{"type": "text", "content": "What is Vectara?"}],
-            stream_response=False,
+            sdk_shared_agent,
+            session_key,
+            request=CreateAgentEventsRequestBody_InputMessage(
+                messages=[{"type": "text", "content": "What is Vectara?"}],
+                stream_response=False,
+            ),
         )
         assert response is not None, "Agent execution should return a response"
 

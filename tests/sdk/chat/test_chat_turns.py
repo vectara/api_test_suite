@@ -74,7 +74,8 @@ class TestChatTurns:
         chat_id, _, _ = _create_chat(sdk_client, sdk_seeded_shared_corpus)
 
         try:
-            turns = sdk_client.chats.list_turns(chat_id)
+            turns_response = sdk_client.chats.list_turns(chat_id)
+            turns = turns_response.turns or []
 
             assert len(turns) >= 1, f"Expected at least 1 turn, got {len(turns)}"
 

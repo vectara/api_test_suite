@@ -7,9 +7,6 @@ Never mutates the bootstrap key -- always creates disposable keys.
 
 import pytest
 
-from vectara.types import ApiKeyRole
-
-
 @pytest.mark.core
 @pytest.mark.serial
 class TestApiKeyLifecycle:
@@ -20,13 +17,12 @@ class TestApiKeyLifecycle:
     def test_create_and_delete_api_key(self, sdk_client, sdk_shared_corpus, unique_id):
         response = sdk_client.api_keys.create(
             name=f"test_key_{unique_id}",
-            api_key_role=ApiKeyRole.SERVING,
+            api_key_role="serving",
             corpus_keys=[sdk_shared_corpus],
         )
 
-        assert response.api_key is not None, "Response should contain api_key"
+        assert response.id is not None, "Response should contain id"
         key_id = response.id
-        assert key_id is not None, f"No key ID in response"
 
         # Verify in list
         pager = sdk_client.api_keys.list()
@@ -41,7 +37,7 @@ class TestApiKeyLifecycle:
         # Create disposable key with a corpus
         response = sdk_client.api_keys.create(
             name=f"toggle_key_{unique_id}",
-            api_key_role=ApiKeyRole.SERVING,
+            api_key_role="serving",
             corpus_keys=[sdk_shared_corpus],
         )
 

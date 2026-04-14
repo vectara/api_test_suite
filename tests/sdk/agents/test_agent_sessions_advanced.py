@@ -6,6 +6,8 @@ Core tests for agent session creation with metadata and message sending.
 
 import pytest
 
+from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
+
 
 @pytest.mark.core
 class TestAgentSessionAdvanced:
@@ -36,11 +38,12 @@ class TestAgentSessionAdvanced:
         try:
             # Send message via agent_events with explicit session
             response = sdk_client.agent_events.create(
-                agent_key=sdk_shared_agent,
-                session_key=session_key,
-                type="input_message",
-                messages=[{"type": "text", "content": "Tell me about vector search"}],
-                stream_response=False,
+                sdk_shared_agent,
+                session_key,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "Tell me about vector search"}],
+                    stream_response=False,
+                ),
             )
             assert response is not None, "Send message failed"
 

@@ -9,6 +9,7 @@ import pytest
 
 from vectara.errors import NotFoundError
 from vectara.core.api_error import ApiError
+from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 
 
 def _extract_output_text(events):
@@ -33,11 +34,12 @@ class TestAgentExecution:
 
         try:
             response = sdk_client.agent_events.create(
-                agent_key=sdk_shared_agent,
-                session_key=session_key,
-                type="input_message",
-                messages=[{"type": "text", "content": "What is Vectara?"}],
-                stream_response=False,
+                sdk_shared_agent,
+                session_key,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "What is Vectara?"}],
+                    stream_response=False,
+                ),
             )
             assert response is not None, "Agent execution should return a response"
 
@@ -57,21 +59,23 @@ class TestAgentExecution:
         try:
             # First turn
             response1 = sdk_client.agent_events.create(
-                agent_key=sdk_shared_agent,
-                session_key=session_key,
-                type="input_message",
-                messages=[{"type": "text", "content": "Tell me about Vectara agents."}],
-                stream_response=False,
+                sdk_shared_agent,
+                session_key,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "Tell me about Vectara agents."}],
+                    stream_response=False,
+                ),
             )
             assert response1 is not None, "First turn failed"
 
             # Second turn (follow-up)
             response2 = sdk_client.agent_events.create(
-                agent_key=sdk_shared_agent,
-                session_key=session_key,
-                type="input_message",
-                messages=[{"type": "text", "content": "How do I configure them?"}],
-                stream_response=False,
+                sdk_shared_agent,
+                session_key,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "How do I configure them?"}],
+                    stream_response=False,
+                ),
             )
             assert response2 is not None, "Follow-up turn failed"
 
@@ -92,11 +96,12 @@ class TestAgentExecutionEdgeCases:
         """Test executing against a non-existent agent."""
         with pytest.raises((NotFoundError, ApiError)):
             sdk_client.agent_events.create(
-                agent_key="nonexistent_agent_xyz123",
-                session_key="fake_session",
-                type="input_message",
-                messages=[{"type": "text", "content": "test query"}],
-                stream_response=False,
+                "nonexistent_agent_xyz123",
+                "fake_session",
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "test query"}],
+                    stream_response=False,
+                ),
             )
 
     def test_agent_handles_special_characters(self, sdk_client, sdk_shared_agent):
@@ -106,11 +111,12 @@ class TestAgentExecutionEdgeCases:
 
         try:
             response = sdk_client.agent_events.create(
-                agent_key=sdk_shared_agent,
-                session_key=session_key,
-                type="input_message",
-                messages=[{"type": "text", "content": "What's Vectara's approach to AI & machine-learning?"}],
-                stream_response=False,
+                sdk_shared_agent,
+                session_key,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": "What's Vectara's approach to AI & machine-learning?"}],
+                    stream_response=False,
+                ),
             )
             assert response is not None, "Special character query failed"
 
@@ -136,11 +142,12 @@ class TestAgentExecutionEdgeCases:
 
         try:
             response = sdk_client.agent_events.create(
-                agent_key=sdk_shared_agent,
-                session_key=session_key,
-                type="input_message",
-                messages=[{"type": "text", "content": long_query}],
-                stream_response=False,
+                sdk_shared_agent,
+                session_key,
+                request=CreateAgentEventsRequestBody_InputMessage(
+                    messages=[{"type": "text", "content": long_query}],
+                    stream_response=False,
+                ),
             )
             assert response is not None, "Long query failed"
 

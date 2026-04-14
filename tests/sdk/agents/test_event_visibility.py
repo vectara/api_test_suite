@@ -8,6 +8,8 @@ These tests focus on event listing and presence verification.
 
 import pytest
 
+from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
+
 
 @pytest.mark.core
 class TestEventVisibility:
@@ -20,11 +22,12 @@ class TestEventVisibility:
 
         # Send message to generate events
         sdk_client.agent_events.create(
-            agent_key=sdk_shared_agent,
-            session_key=session_key,
-            type="input_message",
-            messages=[{"type": "text", "content": "Hello for visibility test"}],
-            stream_response=False,
+            sdk_shared_agent,
+            session_key,
+            request=CreateAgentEventsRequestBody_InputMessage(
+                messages=[{"type": "text", "content": "Hello for visibility test"}],
+                stream_response=False,
+            ),
         )
 
         # List events
