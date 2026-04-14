@@ -104,9 +104,7 @@ class TestPermissions:
                 limit=1,
             )
             assert result is not None, "Scoped serving key should be able to query"
-            assert isinstance(result.search_results, list), (
-                f"Expected search_results list, got: {type(result.search_results)}"
-            )
+            assert isinstance(result.search_results, list), f"Expected search_results list, got: {type(result.search_results)}"
         finally:
             try:
                 sdk_client.api_keys.delete(key_id)

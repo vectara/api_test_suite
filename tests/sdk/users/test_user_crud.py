@@ -116,9 +116,7 @@ class TestUserCrud:
             sdk_client.users.update(username, description=new_desc)
 
             retrieved = sdk_client.users.get(username)
-            assert getattr(retrieved, "description", None) == new_desc, (
-                f"Expected description={new_desc!r}, got: {getattr(retrieved, 'description', None)!r}"
-            )
+            assert getattr(retrieved, "description", None) == new_desc, f"Expected description={new_desc!r}, got: {getattr(retrieved, 'description', None)!r}"
         finally:
             try:
                 sdk_client.users.delete(username)
