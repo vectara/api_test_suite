@@ -22,6 +22,20 @@ def check_pipelines_available(sdk_client):
 
 @pytest.mark.core
 class TestPipelineCrud:
+    def test_list_pipelines(self, sdk_client):
+        """Test listing pipelines/generation presets returns a list."""
+        pager = sdk_client.generation_presets.list(limit=10)
+        presets = []
+        try:
+            for p in pager:
+                presets.append(p)
+                if len(presets) >= 10:
+                    break
+        except Exception:
+            pass
+        assert isinstance(presets, list), f"Expected list, got {type(presets)}"
+        assert len(presets) > 0, "Expected at least one generation preset"
+
     def test_list_generation_presets(self, sdk_client):
         pager = sdk_client.generation_presets.list(limit=10)
         presets = []

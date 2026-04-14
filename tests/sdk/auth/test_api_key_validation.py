@@ -5,6 +5,8 @@ Sanity-level checks that the configured SDK client is valid and that
 basic operations work.
 """
 
+import time
+
 import pytest
 from vectara import Vectara
 
@@ -28,3 +30,13 @@ class TestApiKeyValidation:
             # Any SDK call with an invalid key should raise
             pager = invalid_client.corpora.list(limit=1)
             list(pager)
+
+    def test_response_time_acceptable(self, sdk_client):
+        """Test that authentication response time is acceptable."""
+        start = time.monotonic()
+        pager = sdk_client.corpora.list(limit=1)
+        list(pager)
+        elapsed_s = time.monotonic() - start
+
+        # Authentication should complete within 5 seconds
+        assert elapsed_s < 5, f"Authentication took too long: {elapsed_s * 1000:.1f}ms"

@@ -135,6 +135,24 @@ class TestQueryFiltersCore:
 class TestQueryFilterErrors:
     """Query filter error handling tests."""
 
+    def test_query_with_invalid_filter_returns_400(self, sdk_seeded_corpus, sdk_client):
+        """Test that an invalid metadata filter string returns BadRequestError (400)."""
+        corpus_key = sdk_seeded_corpus.key if hasattr(sdk_seeded_corpus, "key") else sdk_seeded_corpus
+
+        with pytest.raises(BadRequestError):
+            sdk_client.query(
+                query="test",
+                search=SearchCorporaParameters(
+                    corpora=[
+                        KeyedSearchCorpus(
+                            corpus_key=corpus_key,
+                            metadata_filter="part.nonexistent_field = 'value'",
+                        )
+                    ],
+                    limit=10,
+                ),
+            )
+
     def test_query_with_invalid_filter_returns_error(self, sdk_seeded_corpus, sdk_client):
         """Test that an invalid filter expression raises BadRequestError."""
         corpus_key = sdk_seeded_corpus.key if hasattr(sdk_seeded_corpus, "key") else sdk_seeded_corpus

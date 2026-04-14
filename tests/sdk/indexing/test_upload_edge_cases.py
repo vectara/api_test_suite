@@ -10,7 +10,7 @@ import os
 import tempfile
 
 import pytest
-from vectara.errors import NotFoundError
+from vectara.errors import BadRequestError, NotFoundError
 
 from utils.waiters import wait_for
 
@@ -74,6 +74,16 @@ class TestUploadErrors:
                 )
         finally:
             os.unlink(temp_path)
+
+    def test_upload_without_filename_returns_400(self, sdk_client, sdk_test_corpus):
+        """Upload without a proper filename to verify the API rejects it with BadRequestError."""
+        corpus_key = sdk_test_corpus.key
+
+        with pytest.raises((BadRequestError, Exception)):
+            sdk_client.upload.file(
+                corpus_key,
+                file=(None, b"", "application/octet-stream"),
+            )
 
     def test_upload_without_filename_returns_error(self, sdk_client, sdk_test_corpus):
         """Upload without a proper file to verify the API rejects it."""

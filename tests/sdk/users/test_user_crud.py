@@ -100,6 +100,31 @@ class TestUserCrud:
             except Exception:
                 pass
 
+    def test_update_user_description(self, sdk_client, unique_id):
+        """Test updating a user's description."""
+        email = f"test_update_{unique_id}@example.com"
+
+        user = sdk_client.users.create(
+            email=email,
+            username=email,
+            api_roles=[],
+        )
+
+        username = _extract_username(user, email)
+        try:
+            new_desc = f"Updated {unique_id}"
+            sdk_client.users.update(username, description=new_desc)
+
+            retrieved = sdk_client.users.get(username)
+            assert getattr(retrieved, "description", None) == new_desc, (
+                f"Expected description={new_desc!r}, got: {getattr(retrieved, 'description', None)!r}"
+            )
+        finally:
+            try:
+                sdk_client.users.delete(username)
+            except Exception:
+                pass
+
     def test_disable_enable_user(self, sdk_client, unique_id):
         """Test disabling and re-enabling a user."""
         email = f"test_toggle_{unique_id}@example.com"
