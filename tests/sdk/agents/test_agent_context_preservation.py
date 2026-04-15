@@ -10,6 +10,8 @@ from vectara.agent_events.types import CreateAgentEventsRequestBody_InputMessage
 
 from utils.waiters import wait_for
 
+from .conftest import _session_exists
+
 
 @pytest.mark.core
 class TestAgentContextPreservation:
@@ -117,15 +119,6 @@ class TestAgentContextPreservation:
                         sdk_client.agent_sessions.delete(sdk_shared_agent, key)
                     except Exception:
                         pass
-
-
-def _session_exists(sdk_client, agent_key, session_key):
-    """Return True if the session can be retrieved."""
-    try:
-        sdk_client.agent_sessions.get(agent_key, session_key)
-        return True
-    except Exception:
-        return False
 
 
 def _extract_output_text(events):

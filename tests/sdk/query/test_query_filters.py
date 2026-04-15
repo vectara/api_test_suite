@@ -36,14 +36,14 @@ class TestQueryFiltersCore:
                 filter_attributes=[
                     FilterAttribute(
                         name="topic",
-                        level=FilterAttributeLevel.PART,
-                        type=FilterAttributeType.TEXT,
+                        level="part",
+                        type="text",
                         indexed=True,
                     ),
                 ],
             )
         except Exception as e:
-            pytest.skip(f"Could not create corpus: {e}")
+            pytest.fail(f"Could not create corpus: {e}")
 
         try:
             wait_for(
@@ -104,7 +104,7 @@ class TestQueryFiltersCore:
                 key=corpus_key,
             )
         except Exception as e:
-            pytest.skip(f"Could not create corpus: {e}")
+            pytest.fail(f"Could not create corpus: {e}")
 
         try:
             wait_for(

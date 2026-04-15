@@ -11,7 +11,6 @@ import uuid
 import pytest
 from vectara import Vectara
 from vectara.core.request_options import RequestOptions
-from vectara.environment import VectaraEnvironment
 from vectara.types import CoreDocumentPart, CreateDocumentRequest_Core
 
 from utils.waiters import wait_for
@@ -33,8 +32,7 @@ def sdk_client(config):
     import vectara.core.http_client as _http
 
     # Patch default retry count to 3 (matching HTTP test suite)
-    _orig_request = _http.HttpClient.request
-    _orig_request_fn = _orig_request
+    _orig_request_fn = _http.HttpClient.request
 
     def _patched_request(self, *args, request_options=None, **kwargs):
         if request_options is None:
@@ -46,12 +44,8 @@ def sdk_client(config):
     _http.HttpClient.request = _patched_request
 
     # Use custom environment if base_url is not the default production URL
-    base_url = config.base_url
-    if base_url and base_url != "https://api.vectara.io":
-        env = VectaraEnvironment(
-            default=base_url,
-            auth=base_url.replace("api.", "auth."),
-        )
+    env = config.get_vectara_environment()
+    if env:
         return Vectara(api_key=config.api_key, environment=env)
 
     return Vectara(api_key=config.api_key)

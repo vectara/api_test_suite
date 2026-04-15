@@ -12,24 +12,7 @@ from vectara.errors import NotFoundError
 
 from utils.waiters import wait_for
 
-
-def _session_exists(sdk_client, agent_key, session_key):
-    try:
-        sdk_client.agent_sessions.get(agent_key, session_key)
-        return True
-    except Exception:
-        return False
-
-
-def _extract_output_text(events):
-    output_parts = []
-    for event in events:
-        event_type = getattr(event, "type", None)
-        if event_type and ("output" in str(event_type) or "message" in str(event_type)):
-            content = getattr(event, "content", "") or ""
-            if content:
-                output_parts.append(content)
-    return " ".join(output_parts)
+from .conftest import _session_exists
 
 
 @pytest.mark.regression

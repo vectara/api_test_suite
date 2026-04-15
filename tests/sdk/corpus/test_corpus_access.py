@@ -8,7 +8,6 @@ import uuid
 
 import pytest
 from vectara import Vectara
-from vectara.environment import VectaraEnvironment
 from vectara.types import CoreDocumentPart, CreateDocumentRequest_Core
 
 from utils.waiters import wait_for
@@ -63,9 +62,8 @@ class TestCorpusAccess:
 
             try:
                 # Use same environment as the main client
-                base_url = config.base_url
-                if base_url and base_url != "https://api.vectara.io":
-                    env = VectaraEnvironment(default=base_url, auth=base_url.replace("api.", "auth."))
+                env = config.get_vectara_environment()
+                if env:
                     scoped_client = Vectara(api_key=api_key_value, environment=env)
                 else:
                     scoped_client = Vectara(api_key=api_key_value)

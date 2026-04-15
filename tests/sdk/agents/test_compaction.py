@@ -14,15 +14,7 @@ from vectara.types import CompactionConfig
 
 from utils.waiters import wait_for
 
-from .conftest import create_agent
-
-
-def _session_exists(sdk_client, agent_key, session_key):
-    try:
-        sdk_client.agent_sessions.get(agent_key, session_key)
-        return True
-    except Exception:
-        return False
+from .conftest import _session_exists, create_agent
 
 
 @pytest.mark.core

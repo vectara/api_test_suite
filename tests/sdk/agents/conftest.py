@@ -7,7 +7,6 @@ should create their own.
 """
 
 import logging
-import time
 import uuid
 
 import pytest
@@ -90,6 +89,15 @@ def _has_documents(sdk_client, corpus_key):
     try:
         items = list(sdk_client.documents.list(corpus_key, limit=1))
         return len(items) > 0
+    except Exception:
+        return False
+
+
+def _session_exists(sdk_client, agent_key, session_key):
+    """Return True if session is accessible."""
+    try:
+        sdk_client.agent_sessions.get(agent_key, session_key)
+        return True
     except Exception:
         return False
 
@@ -192,8 +200,12 @@ def sdk_agent_with_session(sdk_client, sdk_shared_agent):
     session = sdk_client.agent_sessions.create(sdk_shared_agent)
     session_key = session.key
 
-    # Small delay to let session become available
-    time.sleep(1)
+    wait_for(
+        lambda: _session_exists(sdk_client, sdk_shared_agent, session_key),
+        timeout=10,
+        interval=0.5,
+        description="session to be available",
+    )
 
     sdk_client.agent_events.create(
         sdk_shared_agent,

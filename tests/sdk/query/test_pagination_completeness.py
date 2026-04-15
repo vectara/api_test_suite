@@ -31,7 +31,7 @@ class TestPaginationCompleteness:
         try:
             sdk_client.corpora.create(name=f"Paginate {unique_id}", key=corpus_key)
         except Exception as e:
-            pytest.skip(f"Could not create corpus: {e}")
+            pytest.fail(f"Could not create corpus: {e}")
 
         try:
             wait_for(
@@ -103,7 +103,7 @@ class TestPaginationCompleteness:
                     pass
 
             if len(created) < num_corpora:
-                pytest.skip(f"Could not create all {num_corpora} corpora")
+                pytest.fail(f"Could not create all {num_corpora} corpora")
 
             for key in created:
                 wait_for(

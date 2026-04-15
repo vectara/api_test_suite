@@ -54,6 +54,15 @@ class Config:
         """Set API key programmatically."""
         os.environ["VECTARA_API_KEY"] = api_key
 
+    def get_vectara_environment(self):
+        """Return a VectaraEnvironment for non-production base URLs, or None for default."""
+        from vectara.environment import VectaraEnvironment
+
+        base_url = self.base_url
+        if base_url and base_url != "https://api.vectara.io":
+            return VectaraEnvironment(default=base_url, auth=base_url.replace("api.", "auth."))
+        return None  # Use default production environment
+
     def validate(self) -> tuple[bool, list[str]]:
         """
         Validate required configuration.

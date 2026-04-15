@@ -15,18 +15,14 @@ from utils.waiters import wait_for
 def _extract_username(user, email=None):
     """Extract the username/handle for GET/PATCH/DELETE operations.
 
-    The User API operates by handle (username). The create response may
-    return empty strings for username/email fields even on success.
+    The User API should return non-empty username or email fields on success.
     """
     username = getattr(user, "username", None)
-    if username:
-        return username
-    resp_email = getattr(user, "email", None)
-    if resp_email:
-        return resp_email
-    if email:
-        return email
-    return getattr(user, "id", None)
+    assert username, (
+        f"API should return a non-empty username, got {username!r}. "
+        f"email={getattr(user, 'email', None)!r}, id={getattr(user, 'id', None)!r}"
+    )
+    return username
 
 
 @pytest.mark.core
