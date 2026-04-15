@@ -18,10 +18,7 @@ def _extract_username(user, email=None):
     The User API should return non-empty username or email fields on success.
     """
     username = getattr(user, "username", None)
-    assert username, (
-        f"API should return a non-empty username, got {username!r}. "
-        f"email={getattr(user, 'email', None)!r}, id={getattr(user, 'id', None)!r}"
-    )
+    assert username, f"API should return a non-empty username, got {username!r}. " f"email={getattr(user, 'email', None)!r}, id={getattr(user, 'id', None)!r}"
     return username
 
 
