@@ -8,6 +8,8 @@ import os
 
 import pytest
 
+from vectara.types import CreateLlmRequest_OpenaiCompatible, RemoteAuth_Bearer
+
 
 @pytest.mark.core
 class TestLlmList:
@@ -27,8 +29,13 @@ class TestLlmCrud:
 
         try:
             llm = sdk_client.llms.create(
-                name=f"test_llm_{unique_id}",
-                description="Test LLM created by SDK test suite",
+                request=CreateLlmRequest_OpenaiCompatible(
+                    name=f"test_llm_{unique_id}",
+                    model="gpt-4o-mini",
+                    uri="https://api.openai.com/v1/chat/completions",
+                    auth=RemoteAuth_Bearer(token=api_key),
+                    description="Test LLM created by SDK test suite",
+                ),
             )
         except Exception as e:
             err_msg = str(e).lower()
@@ -36,9 +43,8 @@ class TestLlmCrud:
                 pytest.skip(f"LLM provider issue (quota/verification): {e}")
             raise
 
-        llm_name = getattr(llm, "name", None) or getattr(llm, "id", None)
-        assert llm_name, f"No LLM name/id in create response"
-        assert getattr(llm, "name", None) == f"test_llm_{unique_id}", f"LLM name mismatch: {getattr(llm, 'name', None)}"
+        llm_id = getattr(llm, "id", None)
+        assert llm_id, f"No LLM ID in create response"
+        assert llm.name == f"test_llm_{unique_id}", f"LLM name mismatch: {llm.name}"
 
-        if llm_name:
-            sdk_client.llms.delete(llm_name)
+        sdk_client.llms.delete(llm_id)
