@@ -7,7 +7,6 @@ Core and regression tests for LLM configuration management.
 import os
 
 import pytest
-
 from vectara.types import CreateLlmRequest_OpenaiCompatible, RemoteAuth_Bearer
 
 
