@@ -136,16 +136,18 @@ def build_pytest_args(args, services, profile):
     else:
         report_label = profile
 
+    reports_root = Path(args.output_dir) / "reports" if args.output_dir else Path("reports")
+
     def add_report_flags(phase_args, phase_suffix=""):
         """Add report flags with descriptive filenames."""
         name = f"{report_label}_{phase_suffix}" if phase_suffix else report_label
         if args.html_report:
-            report_path = Path("reports") / f"test_report_{timestamp}_{name}.html"
-            report_path.parent.mkdir(exist_ok=True)
+            report_path = reports_root / f"test_report_{timestamp}_{name}.html"
+            report_path.parent.mkdir(parents=True, exist_ok=True)
             phase_args.extend(["--html", str(report_path), "--self-contained-html"])
         if args.json_report:
-            json_path = Path("reports") / f"test_results_{timestamp}_{name}.json"
-            json_path.parent.mkdir(exist_ok=True)
+            json_path = reports_root / f"test_results_{timestamp}_{name}.json"
+            json_path.parent.mkdir(parents=True, exist_ok=True)
             phase_args.extend(["--json-report", f"--json-report-file={json_path}"])
 
     # --- build phase(s) ---
@@ -194,6 +196,13 @@ def run_tests(phases, console):
     else:
         print("\nStarting test execution...\n")
 
+    # When sys.path has been customized (e.g. by a Bazel py_binary's bazel.pth), propagate it to
+    # the pytest subprocess via PYTHONPATH so pytest and its plugins remain importable.
+    # Respect an already-set PYTHONPATH — the user's value wins.
+    env = os.environ.copy()
+    if "PYTHONPATH" not in env:
+        env["PYTHONPATH"] = os.pathsep.join(p for p in sys.path if p)
+
     for idx, pytest_args in enumerate(phases):
         if len(phases) > 1:
             label = "Phase 1 (parallel)" if idx == 0 else "Phase 2 (sequential workflows)"
@@ -210,7 +219,7 @@ def run_tests(phases, console):
             print(f"Running: pytest {' '.join(pytest_args)}\n")
 
         try:
-            result = subprocess.run(cmd, cwd=Path(__file__).parent)
+            result = subprocess.run(cmd, cwd=Path(__file__).parent, env=env)
             if result.returncode != 0:
                 return result.returncode
         except KeyboardInterrupt:
@@ -306,6 +315,11 @@ Environment Variables:
         type=int,
         metavar="N",
         help="Run tests in parallel with N workers",
+    )
+    parser.add_argument(
+        "--output-dir",
+        default=None,
+        help="Directory where report files are written (beneath a 'reports/' subdir). Defaults to 'reports/' relative to the test suite directory.",
     )
 
     args = parser.parse_args()
