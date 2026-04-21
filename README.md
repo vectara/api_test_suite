@@ -4,7 +4,7 @@ A Python-based test suite for validating Vectara API functionality. Designed for
 
 ## Prerequisites
 
-- Python 3.9 or higher
+- Python 3.14 (matches the lock file resolver; install with `pip install -r requirements.txt` also works on 3.9+ since the lock file contains markers for older versions)
 - Vectara Personal API key
 
 ## Installation
@@ -12,6 +12,16 @@ A Python-based test suite for validating Vectara API functionality. Designed for
 ```bash
 pip install -r requirements.txt
 ```
+
+`requirements.txt` is a pinned, hashed lock file generated from `requirements.in`. To add or bump a dependency:
+
+1. Edit `requirements.in` (loose constraints).
+2. Regenerate the lock:
+   ```bash
+   pip install pip-tools
+   pip-compile --generate-hashes --output-file=requirements.txt requirements.in
+   ```
+3. Commit both files. CI verifies they stay in sync.
 
 ## Running Tests
 
