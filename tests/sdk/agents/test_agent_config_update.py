@@ -10,6 +10,7 @@ import pytest
 
 
 @pytest.mark.core
+@pytest.mark.serial
 class TestAgentConfigUpdate:
     """Agent configuration update operations."""
 

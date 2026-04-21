@@ -27,6 +27,7 @@ class TestCompactionConfig:
         assert retrieved.key == sdk_shared_agent
         assert retrieved.name is not None
 
+    @pytest.mark.serial
     def test_update_agent_description(self, sdk_client, sdk_shared_agent):
         """Verify agent description can be updated."""
         # Save original description to restore after test
@@ -72,6 +73,7 @@ class TestCompactionConfig:
                 except Exception:
                     pass
 
+    @pytest.mark.serial
     def test_update_agent_compaction_config(self, sdk_client, sdk_shared_agent):
         """Verify compaction config can be updated on an existing agent."""
         original = sdk_client.agents.get(sdk_shared_agent)

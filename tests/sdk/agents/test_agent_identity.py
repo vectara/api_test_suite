@@ -25,6 +25,7 @@ class TestAgentIdentity:
         assert agent.name is not None, "Agent should have a name"
         assert agent.model is not None, "Agent should have a model"
 
+    @pytest.mark.serial
     def test_update_agent_description_persists(self, sdk_client, sdk_shared_agent):
         """Update agent description and verify it persists."""
         # Save original description to restore after test
