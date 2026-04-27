@@ -19,6 +19,12 @@ Usage:
     # Run with a depth profile
     python run_tests.py --profile core
 
+    # Run SDK tests
+    python run_tests.py --suite sdk --profile core
+
+    # Run both HTTP and SDK tests
+    python run_tests.py --suite both --profile core
+
     # Generate HTML report
     python run_tests.py --html-report
 """
@@ -48,7 +54,7 @@ PROFILE_MARKERS = {
     "full": None,  # no marker filter
 }
 
-# Available services (auto-discovered from tests/services/ subdirectories)
+# Available services (auto-discovered from tests/services/ and tests/sdk/ subdirectories)
 AVAILABLE_SERVICES = ["agents", "auth", "chat", "corpus", "indexing", "llm", "pipelines", "query", "tools", "users"]
 
 
@@ -122,13 +128,24 @@ def build_pytest_args(args, services, profile):
     # --- marker expression from profile ---
     marker_expr = PROFILE_MARKERS.get(profile)
 
-    # --- target directories ---
+    # --- target directories based on suite ---
+    suite = args.suite
     if services:
-        targets = [f"tests/services/{svc}/" for svc in services]
+        if suite == "http":
+            targets = [f"tests/services/{svc}/" for svc in services]
+        elif suite == "sdk":
+            targets = [f"tests/sdk/{svc}/" for svc in services]
+        else:  # both
+            targets = [f"tests/services/{svc}/" for svc in services] + [f"tests/sdk/{svc}/" for svc in services]
     elif profile == "full":
         targets = ["tests/"]
     else:
-        targets = ["tests/services/"]
+        if suite == "http":
+            targets = ["tests/services/"]
+        elif suite == "sdk":
+            targets = ["tests/sdk/"]
+        else:  # both
+            targets = ["tests/services/", "tests/sdk/"]
 
     # Build a descriptive label for report filenames
     if services:
@@ -247,6 +264,9 @@ Examples:
   python run_tests.py --html-report                            # Generate HTML report
   python run_tests.py --llm-name mockingbird-2.0               # Specify LLM model
   python run_tests.py --generation-preset vectara-summary-ext-24-05-med-omni
+  python run_tests.py --suite sdk --profile core               # Run SDK tests only
+  python run_tests.py --suite both --service agents            # Run HTTP + SDK agent tests
+  python run_tests.py --suite both --profile core              # Run both suites, core profile
 
 Environment Variables:
   VECTARA_API_KEY            Your Personal API key (recommended for CI/CD)
@@ -276,6 +296,14 @@ Environment Variables:
     parser.add_argument(
         "--generation-preset",
         help="Generation preset name (or set VECTARA_GENERATION_PRESET env var)",
+    )
+
+    # Suite selection
+    parser.add_argument(
+        "--suite",
+        choices=["http", "sdk", "both"],
+        default="http",
+        help="Test suite to run: http (default), sdk, or both",
     )
 
     # Profile and service selection
@@ -372,6 +400,7 @@ Environment Variables:
         table.add_column("Setting", style="cyan")
         table.add_column("Value")
 
+        table.add_row("Suite", f"[bold]{args.suite}[/bold]")
         table.add_row("Profile", f"[bold]{profile}[/bold]")
 
         if services:

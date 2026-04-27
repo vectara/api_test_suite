@@ -67,6 +67,29 @@ python run_tests.py --profile core --html-report --json-report  # Both
 
 Reports are saved to `reports/` with descriptive names like `test_report_20260403_core.html`.
 
+### SDK Tests
+
+The test suite includes SDK-level tests that exercise the `vectara` Python SDK (`vectara>=0.4.3`).
+
+```bash
+# Install dependencies (includes the vectara SDK)
+pip install -r requirements.txt
+
+# Run SDK tests only
+python run_tests.py --suite sdk --profile core
+
+# Run both HTTP and SDK test suites
+python run_tests.py --suite both --profile core
+
+# Run SDK tests for a specific service
+python run_tests.py --suite sdk --service agents
+
+# Run SDK tests against a staging environment
+VECTARA_BASE_URL=https://staging.vectara.io python run_tests.py --suite sdk --profile core
+```
+
+The `--suite` flag accepts `http` (default, backward compatible), `sdk`, or `both`.
+
 ### Parallel Execution
 
 ```bash
@@ -89,6 +112,9 @@ python run_tests.py --profile core -p 4
 ```
 tests/
 ├── conftest.py                  # Marker registration, shared fixtures
+├── sdk/
+│   ├── conftest.py              # SDK client + shared agent fixtures
+│   └── agents/                  # SDK agent tests (config, identity, compaction, sessions)
 ├── services/
 │   ├── conftest.py              # Shared corpus/agent fixtures
 │   ├── agents/                  # Agent CRUD, execution, sessions, compaction, context, corpora search

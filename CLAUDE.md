@@ -8,19 +8,23 @@
 - Run single service: `python run_tests.py --service auth`
 - Run single test: `python -m pytest tests/services/auth/test_api_key_validation.py::TestApiKeyValidation::test_health_check -v`
 - Run by keyword: `python -m pytest tests/services/ -k "test_health_check" -v`
+- Run SDK tests: `python run_tests.py --suite sdk --profile core`
+- Run both suites: `python run_tests.py --suite both --profile core`
+- Run SDK single service: `python run_tests.py --suite sdk --service agents`
 
 ## Environment Variables
 - `VECTARA_API_KEY` — required, Personal API key
 - `VECTARA_BASE_URL` — defaults to `https://api.vectara.io`
 
 ## Project Structure
-- `tests/services/<service>/` — test files organized by API service (auth, corpus, indexing, query, chat, agents)
+- `tests/services/<service>/` — HTTP-level test files organized by API service (auth, corpus, indexing, query, chat, agents)
+- `tests/sdk/<service>/` — SDK-level tests using the `vectara` Python SDK (same service layout)
 - `tests/workflows/` — cross-service end-to-end flow tests
 - `utils/client.py` — Vectara API client (single class, all HTTP methods)
 - `utils/waiters.py` — polling helpers and SSE reader
 - `utils/config.py` — environment-based configuration
 - `fixtures/sample_data.py` — test data
-- `run_tests.py` — CLI runner with `--profile` and `--service` flags
+- `run_tests.py` — CLI runner with `--suite`, `--profile`, and `--service` flags
 
 ## Test Markers
 - Every service test must have exactly one depth marker: `@pytest.mark.sanity`, `@pytest.mark.core`, or `@pytest.mark.regression`
@@ -49,6 +53,8 @@
 - Cleanup resources in `try/finally` blocks.
 - Module-scoped fixtures for shared corpora (read-heavy tests), function-scoped for CRUD tests.
 - **Assertions must verify actual behavior, not just HTTP status.** Always verify response data, field values, and state changes — not just `response.success`.
+- **SDK tests** (`tests/sdk/`) use `sdk_client` and `sdk_shared_agent` fixtures from `tests/sdk/conftest.py`. Tests that mutate shared fixtures must be marked `@pytest.mark.serial`.
+- SDK tests require `vectara>=0.4.3`. Use `--suite sdk` or `--suite both` to include them.
 
 ## General Behavior
 - Treat the user as an expert.

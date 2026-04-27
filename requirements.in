@@ -26,3 +26,7 @@ python-dateutil>=2.8.2
 
 # JSON schema validation
 jsonschema>=4.21.0
+
+# Vectara Python SDK (for SDK integration tests)
+vectara>=0.4.3
+httpx-sse>=0.4.0

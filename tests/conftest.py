@@ -106,8 +106,8 @@ def pytest_collection_modifyitems(config, items):
         if "/workflows/" in str(item.fspath):
             continue
 
-        # Only enforce on service tests (under tests/services/).
-        if "/services/" not in str(item.fspath):
+        # Only enforce on service and SDK tests.
+        if "/services/" not in str(item.fspath) and "/sdk/" not in str(item.fspath):
             continue
 
         marker_names = {m.name for m in item.iter_markers()}
