@@ -28,7 +28,21 @@ class TestDocumentLifecycle:
             description="document to be indexed",
         )
 
-        query_resp = client.query(test_corpus, "Krakatoa volcano eruption", limit=10)
+        def _krakatoa_in_results():
+            qr = client.query(test_corpus, "Krakatoa volcano eruption", limit=10)
+            if not qr.success:
+                return None
+            hits = qr.data.get("search_results", [])
+            if any("krakatoa" in r.get("text", "").lower() for r in hits):
+                return qr
+            return None
+
+        query_resp = wait_for(
+            _krakatoa_in_results,
+            timeout=30,
+            interval=2,
+            description="Krakatoa to appear in search",
+        )
         assert query_resp.success, f"Query failed: {query_resp.status_code}"
         results = query_resp.data.get("search_results", [])
         found = any("krakatoa" in r.get("text", "").lower() for r in results)
