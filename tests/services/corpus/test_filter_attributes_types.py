@@ -60,15 +60,31 @@ class TestFilterAttributeTypes:
                 description="both documents indexed",
             )
 
-            text_query = client.post(
-                "/v2/query",
-                data={
-                    "query": "research and data",
-                    "search": {
-                        "corpora": [{"corpus_key": corpus_key, "metadata_filter": "part.category = 'tech'"}],
-                        "limit": 10,
-                    },
-                },
+            def _filter_query_returns_results(metadata_filter):
+                def _check():
+                    resp = client.post(
+                        "/v2/query",
+                        data={
+                            "query": "research and data",
+                            "search": {
+                                "corpora": [{"corpus_key": corpus_key, "metadata_filter": metadata_filter}],
+                                "limit": 10,
+                            },
+                        },
+                    )
+                    if not resp.success:
+                        return None
+                    if not resp.data.get("search_results"):
+                        return None
+                    return resp
+
+                return _check
+
+            text_query = wait_for(
+                _filter_query_returns_results("part.category = 'tech'"),
+                timeout=30,
+                interval=2,
+                description="text filter query to return results",
             )
             assert text_query.success, f"Text filter query failed: {text_query.status_code}"
             text_results = text_query.data.get("search_results", [])
@@ -77,15 +93,11 @@ class TestFilterAttributeTypes:
                 "quantum" in r.get("text", "").lower() for r in text_results
             ), f"Text filter for 'tech' should only return tech doc: {[r.get('text', '')[:50] for r in text_results]}"
 
-            int_query = client.post(
-                "/v2/query",
-                data={
-                    "query": "research and data",
-                    "search": {
-                        "corpora": [{"corpus_key": corpus_key, "metadata_filter": "part.priority >= 3"}],
-                        "limit": 10,
-                    },
-                },
+            int_query = wait_for(
+                _filter_query_returns_results("part.priority >= 3"),
+                timeout=30,
+                interval=2,
+                description="integer filter query to return results",
             )
             assert int_query.success, f"Integer filter query failed: {int_query.status_code}"
             int_results = int_query.data.get("search_results", [])
@@ -94,15 +106,11 @@ class TestFilterAttributeTypes:
                 "climate" in r.get("text", "").lower() for r in int_results
             ), f"Integer filter >= 3 should only return science doc: {[r.get('text', '')[:50] for r in int_results]}"
 
-            bool_query = client.post(
-                "/v2/query",
-                data={
-                    "query": "research and data",
-                    "search": {
-                        "corpora": [{"corpus_key": corpus_key, "metadata_filter": "part.is_public = true"}],
-                        "limit": 10,
-                    },
-                },
+            bool_query = wait_for(
+                _filter_query_returns_results("part.is_public = true"),
+                timeout=30,
+                interval=2,
+                description="boolean filter query to return results",
             )
             assert bool_query.success, f"Boolean filter query failed: {bool_query.status_code}"
             bool_results = bool_query.data.get("search_results", [])
