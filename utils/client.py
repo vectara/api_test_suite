@@ -10,6 +10,7 @@ Provides a clean interface for all Vectara API operations with:
 
 import logging
 import time
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
@@ -19,6 +20,39 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 from .config import Config
+
+# Methods safe to auto-retry on 5xx/429. POST/PUT/PATCH/DELETE are excluded
+# because urllib3 cannot tell whether a retried mutation already committed
+# server-side, and a duplicate POST that returns 409 looks indistinguishable
+# from a "real" duplicate-key bug. See PR fixing flaky agent-creation tests
+# where a transient 5xx on the first attempt left the resource created and
+# the retried POST returned 409 "already exists".
+RETRY_SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+
+def _extract_retry_history(response: requests.Response) -> list:
+    """Return urllib3's per-attempt retry history as a list of dicts.
+
+    Empty list means the response came from a single attempt with no retries.
+    Each entry is a RequestHistory namedtuple from urllib3 with fields
+    method/url/error/status/redirect_location; we render them as plain dicts
+    so failed-test logs and APIResponse consumers don't need urllib3 imports.
+    """
+    raw = getattr(response, "raw", None)
+    retries = getattr(raw, "retries", None) if raw is not None else None
+    history = getattr(retries, "history", None) if retries is not None else None
+    if not history:
+        return []
+    return [
+        {
+            "method": getattr(item, "method", None),
+            "url": getattr(item, "url", None),
+            "status": getattr(item, "status", None),
+            "error": str(item.error) if getattr(item, "error", None) is not None else None,
+            "redirect_location": getattr(item, "redirect_location", None),
+        }
+        for item in history
+    ]
 
 
 @dataclass
@@ -30,6 +64,8 @@ class APIResponse:
     elapsed_ms: float
     headers: dict = field(default_factory=dict)
     error: Optional[str] = None
+    request_id: Optional[str] = None
+    retry_history: list = field(default_factory=list)
 
     @property
     def success(self) -> bool:
@@ -52,12 +88,11 @@ class VectaraClient:
         if self._session is None:
             self._session = requests.Session()
 
-            # Configure retry strategy
             retry_strategy = Retry(
                 total=self.config.max_retries,
                 backoff_factor=1,
                 status_forcelist=[429, 500, 502, 503, 504],
-                allowed_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+                allowed_methods=RETRY_SAFE_METHODS,
             )
             adapter = HTTPAdapter(max_retries=retry_strategy)
             self._session.mount("https://", adapter)
@@ -102,9 +137,10 @@ class VectaraClient:
             APIResponse with status, data, and timing
         """
         url = self._build_url(endpoint)
-        request_headers = {**(headers or {})}
+        request_id = uuid.uuid4().hex
+        request_headers = {"X-Request-Id": request_id, **(headers or {})}
 
-        self.logger.debug(f"{method} {url}")
+        self.logger.debug(f"{method} {url} request_id={request_id}")
 
         start_time = time.time()
 
@@ -120,49 +156,66 @@ class VectaraClient:
 
             elapsed_ms = (time.time() - start_time) * 1000
 
-            # Try to parse JSON response
             try:
                 response_data = response.json()
             except ValueError:
                 response_data = response.text
 
-            self.logger.debug(f"Response: {response.status_code} ({elapsed_ms:.1f}ms)")
+            retry_history = _extract_retry_history(response)
+            if retry_history:
+                self.logger.warning(
+                    "Request retried %d time(s): method=%s url=%s request_id=%s "
+                    "final_status=%s history=%s",
+                    len(retry_history),
+                    method,
+                    url,
+                    request_id,
+                    response.status_code,
+                    retry_history,
+                )
+
+            self.logger.debug(f"Response: {response.status_code} ({elapsed_ms:.1f}ms) request_id={request_id}")
 
             return APIResponse(
                 status_code=response.status_code,
                 data=response_data,
                 elapsed_ms=elapsed_ms,
                 headers=dict(response.headers),
+                request_id=request_id,
+                retry_history=retry_history,
             )
 
         except requests.exceptions.Timeout:
             elapsed_ms = (time.time() - start_time) * 1000
-            self.logger.error(f"Request timeout after {elapsed_ms:.1f}ms")
+            self.logger.error(f"Request timeout after {elapsed_ms:.1f}ms request_id={request_id}")
             return APIResponse(
                 status_code=408,
                 data=None,
                 elapsed_ms=elapsed_ms,
                 error="Request timeout",
+                request_id=request_id,
             )
 
         except requests.exceptions.ConnectionError as e:
             elapsed_ms = (time.time() - start_time) * 1000
-            self.logger.error(f"Connection error: {e}")
+            self.logger.error(f"Connection error: {e} request_id={request_id}")
             return APIResponse(
                 status_code=0,
                 data=None,
                 elapsed_ms=elapsed_ms,
                 error=f"Connection error: {str(e)}",
+                request_id=request_id,
             )
 
         except Exception as e:
             elapsed_ms = (time.time() - start_time) * 1000
-            self.logger.error(f"Unexpected error: {e}")
+            self.logger.error(f"Unexpected error: {e} request_id={request_id}")
             return APIResponse(
                 status_code=0,
                 data=None,
                 elapsed_ms=elapsed_ms,
                 error=f"Unexpected error: {str(e)}",
+                request_id=request_id,
             )
 
     def _request_raw(
@@ -198,9 +251,10 @@ class VectaraClient:
             The raw :class:`requests.Response` object.
         """
         url = self._build_url(endpoint)
-        request_headers = {**(headers or {})}
+        request_id = uuid.uuid4().hex
+        request_headers = {"X-Request-Id": request_id, **(headers or {})}
 
-        self.logger.debug(f"{method} {url}")
+        self.logger.debug(f"{method} {url} request_id={request_id}")
 
         kwargs: dict = {
             "method": method,
