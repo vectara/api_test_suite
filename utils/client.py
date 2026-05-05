@@ -164,8 +164,7 @@ class VectaraClient:
             retry_history = _extract_retry_history(response)
             if retry_history:
                 self.logger.warning(
-                    "Request retried %d time(s): method=%s url=%s request_id=%s "
-                    "final_status=%s history=%s",
+                    "Request retried %d time(s): method=%s url=%s request_id=%s " "final_status=%s history=%s",
                     len(retry_history),
                     method,
                     url,
