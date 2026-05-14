@@ -53,15 +53,28 @@ class TestQueryFiltersCore:
                 description="document to be indexed",
             )
 
-            query_resp = client.post(
-                "/v2/query",
-                data={
-                    "query": "artificial intelligence",
-                    "search": {
-                        "corpora": [{"corpus_key": corpus_key, "metadata_filter": "part.topic = 'ai'"}],
-                        "limit": 10,
+            def _query_returns_results():
+                resp = client.post(
+                    "/v2/query",
+                    data={
+                        "query": "artificial intelligence",
+                        "search": {
+                            "corpora": [{"corpus_key": corpus_key, "metadata_filter": "part.topic = 'ai'"}],
+                            "limit": 10,
+                        },
                     },
-                },
+                )
+                if not resp.success:
+                    return None
+                if not resp.data.get("search_results"):
+                    return None
+                return resp
+
+            query_resp = wait_for(
+                _query_returns_results,
+                timeout=30,
+                interval=2,
+                description="filter query to return results",
             )
             assert query_resp.success, f"Query failed: {query_resp.status_code} - {query_resp.data}"
             results = query_resp.data.get("search_results", [])
