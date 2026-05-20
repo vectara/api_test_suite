@@ -27,8 +27,13 @@ class Config:
 
     @property
     def request_timeout(self) -> int:
-        """Get request timeout in seconds."""
-        return int(os.environ.get("VECTARA_TIMEOUT", "30"))
+        """Get request timeout in seconds.
+
+        Default 60s — agent execution involves LLM generation which routinely
+        runs > 30s in staging; matches the explicit budget asserted by
+        test_execute_agent_response_time.
+        """
+        return int(os.environ.get("VECTARA_TIMEOUT", "60"))
 
     @property
     def max_retries(self) -> int:

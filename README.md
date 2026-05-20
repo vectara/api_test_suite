@@ -102,7 +102,7 @@ python run_tests.py --profile core -p 4
 |----------|-------------|----------|
 | `VECTARA_API_KEY` | Personal API key | Yes |
 | `VECTARA_BASE_URL` | API URL (default: `https://api.vectara.io`) | No |
-| `VECTARA_TIMEOUT` | Request timeout in seconds (default: 30) | No |
+| `VECTARA_TIMEOUT` | Request timeout in seconds (default: 60) | No |
 | `VECTARA_LLM_NAME` | LLM model name for generation | No |
 | `VECTARA_GENERATION_PRESET` | Generation preset name | No |
 | `OPENAI_API_KEY` | OpenAI key for BYOL LLM tests (regression only) | No |
