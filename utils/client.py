@@ -951,10 +951,7 @@ class VectaraClient:
 
         response = self.list_llms(limit=100)
         if not response.success:
-            raise RuntimeError(
-                f"Cannot resolve an agent model: GET /v2/llms returned "
-                f"{response.status_code}. Set VECTARA_LLM_NAME to pin one."
-            )
+            raise RuntimeError(f"Cannot resolve an agent model: GET /v2/llms returned " f"{response.status_code}. Set VECTARA_LLM_NAME to pin one.")
         llms = response.data.get("llms", []) if isinstance(response.data, dict) else []
         enabled = [llm for llm in llms if llm.get("enabled", True)]
         pool = enabled or llms
@@ -971,10 +968,7 @@ class VectaraClient:
             if self._discovered_model_name:
                 return self._discovered_model_name
 
-        raise RuntimeError(
-            "Cannot resolve an agent model: no LLMs are configured in the "
-            "target environment. Set VECTARA_LLM_NAME or register an LLM."
-        )
+        raise RuntimeError("Cannot resolve an agent model: no LLMs are configured in the " "target environment. Set VECTARA_LLM_NAME or register an LLM.")
 
     def _default_preset_llm_name(self) -> Optional[str]:
         """Return the ``llm_name`` of the default generation preset, if any.
