@@ -81,6 +81,7 @@ class VectaraClient:
         self._session: Optional[requests.Session] = None
         self.generation_preset = self.config.generation_preset
         self.llm_name = self.config.llm_name
+        self._discovered_model_name: Optional[str] = None
 
     @property
     def session(self) -> requests.Session:
@@ -916,6 +917,89 @@ class VectaraClient:
         """List all agents."""
         return self.get("/v2/agents", params={"limit": limit})
 
+    def resolve_agent_model_name(self) -> str:
+        """Resolve the LLM name to configure on a newly created agent.
+
+        Unlike chat and query generation -- where an omitted model lets the
+        backend apply the environment's default LLM -- an agent stores an
+        explicit model in its definition, so the suite must supply one.
+        Resolution order:
+
+        1. An explicit ``VECTARA_LLM_NAME`` override, when set.
+        2. Otherwise the ``llm_name`` of the environment's default generation
+           preset (``GET /v2/generation_presets``, the preset marked
+           ``default: true``). That default preset is exactly what chat and
+           query fall back to when no generator is specified, so this aligns
+           the agent with the same model. The name is matched back to a
+           registered LLM case-insensitively, since a preset may spell it
+           differently than the LLM is registered (e.g. ``llama3.3-70b`` vs
+           ``llama3.3-70B``).
+        3. Otherwise the first enabled LLM from ``GET /v2/llms``.
+
+        The result is cached for the client's lifetime. Discovery keeps the
+        suite portable across deployments: an on-premise environment that
+        serves its own model (e.g. ``llama3.3-70B``) is picked up
+        automatically, without pinning a provider-specific name in tests.
+
+        Raises:
+            RuntimeError: If no model is configured and none can be discovered.
+        """
+        if self.llm_name:
+            return self.llm_name
+        if self._discovered_model_name is not None:
+            return self._discovered_model_name
+
+        response = self.list_llms(limit=100)
+        if not response.success:
+            raise RuntimeError(
+                f"Cannot resolve an agent model: GET /v2/llms returned "
+                f"{response.status_code}. Set VECTARA_LLM_NAME to pin one."
+            )
+        llms = response.data.get("llms", []) if isinstance(response.data, dict) else []
+        enabled = [llm for llm in llms if llm.get("enabled", True)]
+        pool = enabled or llms
+
+        resolved = self._default_preset_llm_name()
+        if resolved:
+            registered = self._registered_llm_name(resolved, pool)
+            if registered:
+                self._discovered_model_name = registered
+                return registered
+
+        if pool:
+            self._discovered_model_name = pool[0].get("name")
+            if self._discovered_model_name:
+                return self._discovered_model_name
+
+        raise RuntimeError(
+            "Cannot resolve an agent model: no LLMs are configured in the "
+            "target environment. Set VECTARA_LLM_NAME or register an LLM."
+        )
+
+    def _default_preset_llm_name(self) -> Optional[str]:
+        """Return the ``llm_name`` of the default generation preset, if any.
+
+        The default LLM is expressed through the default generation preset;
+        ``GET /v2/llms`` itself does not currently surface a default flag.
+        """
+        response = self.list_generation_presets(limit=100)
+        if not response.success or not isinstance(response.data, dict):
+            return None
+        for preset in response.data.get("generation_presets", []):
+            if preset.get("default") and preset.get("enabled", True) and preset.get("llm_name"):
+                return preset["llm_name"]
+        return None
+
+    @staticmethod
+    def _registered_llm_name(llm_name: str, llms: list) -> Optional[str]:
+        """Return the registered spelling of *llm_name* among *llms*, matched case-insensitively."""
+        target = llm_name.casefold()
+        for llm in llms:
+            name = llm.get("name")
+            if name and name.casefold() == target:
+                return name
+        return None
+
     def create_agent(
         self,
         name: str,
@@ -932,7 +1016,8 @@ class VectaraClient:
             name: Agent name (display name)
             corpus_keys: Optional list of corpus keys for RAG search tool
             description: Agent description
-            model_name: LLM model name (uses instance llm_name or defaults to gpt-4o)
+            model_name: LLM model name; when omitted, resolved from the
+                environment via :meth:`resolve_agent_model_name`
             agent_key: Unique key for the agent (auto-generated if not provided)
             tool_configurations: Optional list of tool config dicts (e.g. corpora_search, web_search)
         """
@@ -942,8 +1027,7 @@ class VectaraClient:
         if not agent_key:
             agent_key = f"test_agent_{uuid.uuid4().hex[:8]}"
 
-        # Use provided model_name, fall back to instance llm_name, then default
-        model_name = model_name or self.llm_name or "gpt-4o"
+        model_name = model_name or self.resolve_agent_model_name()
 
         # Build first_step with type "conversational" and required output_parser
         first_step = {
